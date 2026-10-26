@@ -1,0 +1,21 @@
+# Original source material and internal repositories are intentionally excluded.
+source_repos/
+*.pdf
+*.ppt
+*.pptx
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+
+# Local tooling and editor state
+.agents/
+.codex/
+.vscode/
+.idea/
+.DS_Store
+
+# Temporary extraction and OCR output
+tmp/
+ocr/
+*.txt
