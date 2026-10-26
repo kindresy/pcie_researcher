@@ -1,4 +1,4 @@
-# PCIe Protocol Analyzer：不要只抓到一片很贵的波形
+# PCIe Protocol Analyzer：分层捕获与证据对齐
 
 ## 1. 为什么PCIe不能像I2C那样直接看线
 

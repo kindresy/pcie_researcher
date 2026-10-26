@@ -1,4 +1,4 @@
-# BAR 与 Cadence 地址翻译：三种地址别再挤一张身份证
+# BAR 与 Cadence 地址翻译：区分 CPU、PCIe 和设备内部地址
 
 ## 1. BAR 解决的是“设备需要多大窗口、放在哪里”
 
@@ -152,7 +152,7 @@ Cadence Chapter 10 用 `axi_addr0[5:0]=19` 表达 1 MiB Memory region，验证�
 
 来源：Cadence §§4.5.6.6–4.5.6.6.5，printed pp.255–262 / PDF pp.344–351；Chapter 9 §9.5 registers 从 printed p.669 起。
 
-## 8. Resizable BAR：大小也可以由软件协商
+## 8. Resizable BAR：软件在设备支持范围内选择 BAR 大小
 
 普通 BAR sizing 只读取当前固定 aperture；Resizable BAR Extended Capability 则列出硬件可接受的多个 size，系统软件选择最合适值写入 Control.BAR Size。
 
@@ -197,7 +197,7 @@ Linux pci_set_master()
 
 ### EP DMA 请求一发就 AXI DECERR
 
-优先检查 region 是否匹配、region overlap/priority、base alignment 与 size，而不是先怪 PCIe Link。若 AXI request 都没成功进入 TLP generation，链路当然“清白得有点无聊”。
+优先检查 region 是否匹配、region overlap/priority、base alignment 与 size。若 AXI request 尚未进入 TLP generation，问题就发生在链路之前，此时没有必要先排查 PCIe Link。
 
 ### MRd 发出后 AXI 返回 SLVERR/DECERR
 

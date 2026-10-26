@@ -1,6 +1,6 @@
 # PCIe 资料冲突与文档勘误账本
 
-这份文件专门收容那些“两个证据都摆在桌上，却讲了不同故事”的问题。
+这份文件记录不同来源之间不能直接相容的结论。
 
 它不是 TODO 垃圾桶，也不是把判断责任推给读者。每项冲突都必须给出当前最佳裁决；
 证据仍不足时，明确采用哪一个保守模型继续研究，并说明未来怎样验证。研究过程中不因
@@ -31,7 +31,7 @@ PCIe Spec 与芯片实现手册的关系不能简单套这条顺序：Spec 决�
 
 ## CE-001：公共 Ultra DTSI 与最终产品 DTS 的 `apt-ranges` 不同
 
-- 状态：`Document Fix Pending`
+- 状态：`Resolved`
 - 严重度：高
 - 类型：最终 DTS 覆盖公共 DTSI；已有知识文档勘误
 
@@ -75,15 +75,14 @@ DTS property 覆盖不是数组追加，因此最终 DTB 采用产品 DTS 的 pr
 
 ### 影响与勘误
 
-下列文档若把公共 DTSI 16 条表直接称作“X6000 最终 runtime 地址图”，属于待修正文：
+相关正文已经统一改为“固件保留 region + 产品 DTS 选择性覆盖”的模型，并分别说明普通、LM、DS 和 Group A/B 的最终 property。涉及的文档包括：
 
 - `code_studies/linux_x6000_pcie_stack.md`
 - `code_studies/x6000_address_map.md`
 - `code_studies/x6000_boot_handoff_and_ownership.md`
 - `code_studies/x6000_integrated_pcie_architecture.md`
 
-修正模型应写成“固件保留 region + 产品 DTS 选择性覆盖”，并分开列普通、LM、DS、
-Group A/B 的最终 property。
+`EPC set_bar()` 未清空全部 APT、低 offset region 依赖前一阶段保留这一点仍是 **Inferred**，需要实机 APT dump 验证；但它不再构成上述四篇正文之间的冲突。
 
 ## CE-002：Host 驱动常量名称与实际 BAR/APT 目标容易产生误读
 
@@ -209,4 +208,3 @@ driver，不能把同仓路径邻近误当版本兼容证据。
 
 ### 验证与关闭条件
 ```
-

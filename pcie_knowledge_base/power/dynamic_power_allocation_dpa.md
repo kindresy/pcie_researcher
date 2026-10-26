@@ -1,4 +1,4 @@
-# DPA：Function 还在 D0，但软件要求它少吃一点电
+# DPA：Function 在 D0 状态下的动态功耗档位
 
 ## 1. 它解决什么问题
 
@@ -64,7 +64,7 @@ Host Config Write: target substate
   → 完成后经LM更新Substate Status
 ```
 
-core只提供标准寄存器与通知握手，不会替application logic自动降频。client若忽略中断，就会成为“菜单印了DPA，厨房没有开火”的设备。
+core 只提供标准寄存器与通知握手，不会替 application logic 自动降频。若 client 忽略状态变化通知，设备虽然暴露了 DPA Capability，却不会真正执行相应的功耗转换。
 
 VF不能实现DPA Capability；VF power allocation由PF的DPA管理。当前Cadence VF capability list也没有DPA，与Base Spec一致。
 
@@ -89,7 +89,7 @@ VF不能实现DPA Capability；VF power allocation由PF的DPA管理。当前Cade
 
 ## 6. Linux边界
 
-本机Linux 6.8 UAPI header可确认capability ID、offset和Substate_Max mask，但公开 `include/linux/pci.h` 中未发现通用 `pci_set_dpa_substate()` API。workspace没有`drivers/pci`源码，因此无法确认本目标平台由哪个subsystem主动使用DPA。
+X6000 Linux 5.10.4 的 `include/uapi/linux/pci_regs.h` 可确认 capability ID、offset 和 Substate_Max mask；完整 `drivers/pci/` 中也未发现通用 `pci_set_dpa_substate()` 一类的 DPA policy API。因此可以确认该内核没有通用 DPA 管理调用链；若产品使用 DPA，需要继续查平台或设备专用代码，而不能假定 PCI core 会自动选择 substate。
 
 合理边界是platform power/thermal policy选择预算，device firmware执行转换。设备私有DVFS策略必须与DPA ownership协调；不能一边Status声称10 W，一边私有daemon把全部engine拉满。
 
@@ -110,5 +110,4 @@ Control写了但Status不变：检查Control Enabled、`DPA_INTERRUPT`、client�
 
 - PCI Express Base Specification 5.0：§6.16 pp.604–606；§7.9.12 pp.941–946；§9.3.7.12 VF规则。
 - Cadence PCIe Core User Guide：§§9.1.1.1.85–90，printed pp.388–391 / PDF pp.477–480；Appendix F.4 Table F.5；Appendix H.1 Table H.1，printed p.1370 / PDF p.1459。
-- Ubuntu 6.8 `include/uapi/linux/pci_regs.h`：DPA ID/basic fields；Linux policy implementation因缺source保持Unknown。
-
+- X6000 Linux 5.10.4 `include/uapi/linux/pci_regs.h`：DPA ID/basic fields；`drivers/pci/` 全树未发现通用 DPA policy API。

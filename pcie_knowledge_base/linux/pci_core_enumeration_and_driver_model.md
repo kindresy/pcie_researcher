@@ -1,4 +1,4 @@
-# Linux PCI Core：先搭一棵硬件树，再让 driver 来认领叶子
+# Linux PCI Core：设备枚举、资源分配与驱动绑定
 
 ## 1. PCI Core 在 driver probe 之前做了什么
 
@@ -24,7 +24,7 @@ Firmware/DT/ACPI 描述 Host Bridge
 
 ### `struct pci_host_bridge`
 
-代表 CPU/SoC 进入一棵 PCI hierarchy 的根。Ubuntu 6.8 headers 可确认其含：
+代表 CPU/SoC 进入一棵 PCI hierarchy 的根。X6000 Linux 5.10.4 的定义包含：
 
 - root `pci_bus`；
 - `pci_ops` configuration access；
@@ -45,7 +45,7 @@ Firmware/DT/ACPI 描述 Host Bridge
 
 一颗 multi-function EP 会有多个 `pci_dev`；它们共享物理 Link，却有独立 Configuration Space 和 driver binding。
 
-来源：本机 Ubuntu 6.8 header `/usr/src/linux-hwe-6.8-headers-6.8.0-136/include/linux/pci.h`，`struct pci_host_bridge`、`struct pci_bus`、`struct pci_dev`。只有声明/结构证据，不包含实现调用链。
+来源：X6000 Linux 5.10.4 `include/linux/pci.h` 中的 `struct pci_host_bridge`、`struct pci_bus` 和 `struct pci_dev`；通用实现位于 `drivers/pci/`。本机 Ubuntu 6.8 header 仅用于对照较新接口，不能替代目标分支源码。
 
 ## 3. Configuration access 怎样下到硬件
 
@@ -65,7 +65,7 @@ pci_bus_read_config_dword(bus, devfn, where)
  → u32 返回 PCI core
 ```
 
-目标 SoC host driver 未提供，因此它属于哪种 access、是否需锁住共享 ATU region，当前 **Unknown**。
+X6000 RC 路径已经提供：`drivers/pci/controller/pcie-edge-host.c` 的 `edge_pcie_host_ops` 实现配置访问，`edge_pcie_host_setup()` 设置 `bridge->ops` 后调用 `pci_host_probe()`。该驱动把名为 `cfg` 的 resource 映射为配置 aperture，并在 `edge_pcie_host_init_address_translation()` 中初始化 Cadence 地址转换。精确的 BDF 编码和访问锁见同文件的 `edge_pcie_host_rd_other_conf()` / `edge_pcie_host_wr_other_conf()`，不再是 Unknown。
 
 ## 4. Linux enumeration 与协议 enumeration 的接缝
 
@@ -96,7 +96,7 @@ Header 注释确认：`pci_register_driver()` 会对已存在且未被占用的�
 
 注册 driver 不会“触发 PCIe 枚举”，它只是把一个匹配规则加入 driver model。枚举与 binding 是两阶段。
 
-## 6. Resource tree：为什么 `pci_request_regions()` 不是多余礼节
+## 6. Resource tree 与 `pci_request_regions()` 的作用
 
 枚举得到的 BAR 范围进入 `pdev->resource[]` 和全局 resource tree。它同时表达：
 
@@ -104,18 +104,19 @@ Header 注释确认：`pci_register_driver()` 会对已存在且未被占用的�
 - 是 I/O 还是 Memory、prefetchable 等；
 - 此地址范围已由哪个 device/driver claim。
 
-request region 的意义是所有权冲突检测，阻止两个驱动同时把同一 MMIO 当自家厨房。它通常不重新给 BAR 分地址，也不创建虚拟映射。
+request region 的意义是执行资源所有权冲突检测，避免两个驱动同时使用同一段 MMIO。它通常不重新给 BAR 分配地址，也不创建 CPU 虚拟映射。
 
 ## 7. Evidence boundary
 
-- **Confirmed**：公开结构、API 声明和 header 注释，来自本机 Ubuntu 6.8 kernel headers。
+- **Confirmed**：结构、API 和通用调用链，来自 X6000 Linux 5.10.4（commit `e74fd0e7746a`）的 `include/linux/pci.h`、`drivers/pci/probe.c`、`drivers/pci/pci.c` 和 `drivers/pci/pci-driver.c`。
 - **Confirmed**：PCIe config/BAR/bus-number 协议，来自 Base Spec 5.0 与 Cadence manual。
-- **Inferred architecture**：host driver 将 Cadence access/window 封装为 `pci_host_bridge/pci_ops`；Linux 通用 host-controller 模型要求如此，但目标代码未提供。
-- **Unknown**：目标 kernel commit 中 `pci_scan_*`、resource allocator、`pci_enable_device()` 的精确内部函数链和目标 Cadence host driver。必须补完整 source tree。
+- **Confirmed X6000 integration**：`pcie-edge-plat.c`、`pcie-edge-host.c` 和 `pcie-edge.c` 将 Cadence access/window、IRQ domain 与 `pci_host_bridge/pci_ops` 连接起来，并由 `pci_host_probe()` 进入通用枚举流程。
+- **仍需实机确认**：具体产品最终 DTB、firmware 是否预先保留部分窗口，以及外部 Host 所用内核不属于这棵 X6000 设备侧源码树。
 
 ## 8. Source Reference
 
-- Linux header: `/usr/src/linux-hwe-6.8-headers-6.8.0-136/include/linux/pci.h`。
+- X6000 Linux 5.10.4：`include/linux/pci.h`、`drivers/pci/probe.c`、`drivers/pci/pci.c`、`drivers/pci/pci-driver.c`。
+- X6000 Host controller：`drivers/pci/controller/pcie-edge-plat.c`、`pcie-edge-host.c`、`pcie-edge.c`。
 - PCIe Base Specification 5.0, Configuration/Type 0/Type 1/BAR sections。
 - Cadence Core User Guide §§4.5.5–4.5.6 与 Chapter 9/10 address/config register blocks。
 - 王齐《PCI Express 体系结构导读》第 14 章，printed pp.365–416 / PDF pp.377–428：历史 Linux x86/PowerPC 扫描、resource assignment 与 host `ranges`/inbound/outbound 实例；API 属 Linux 2.6-era，只作架构演变证据。

@@ -1,4 +1,4 @@
-# MSI / MSI-X Failure：设备说“我写了”，CPU 说“我没听见”
+# MSI / MSI-X Failure：从设备 Memory Write 到 CPU IRQ 的排查
 
 ## 1. 中断路径不是一根线
 
@@ -12,7 +12,7 @@ device event
  → ISR
 ```
 
-MSI 本质是 Posted Memory Write。没有物理 MSI 线，也没有普通 Completion。排障要沿写事务走，而不是拿示波器找一根想象中的 `MSI#`。
+MSI 本质是 Posted Memory Write，没有独立的物理 `MSI#` 信号线，也没有普通 Completion。排障应沿着这笔写事务检查地址、数据和路由，而不是按传统线中断的路径寻找引脚电平。
 
 ## 2. 先判定断在哪边
 
@@ -72,4 +72,3 @@ capability 原始 bytes、MSI-X table/PBA snapshot（注意敏感地址）、API
 - PCIe Base Specification 5.0 r1.0, §§6.1.4、7.7.1–7.7.2。
 - Cadence PCIe Core User Guide, §§4.5.6.6.6–4.5.6.6.7、4.6、MSI/MSI-X signal/register descriptions。
 - [INTx、MSI、MSI-X 与 Cadence](../interrupts/intx_msi_msix_and_cadence.md)。
-

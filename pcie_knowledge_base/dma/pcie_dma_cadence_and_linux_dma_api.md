@@ -1,4 +1,4 @@
-# PCIe DMA、Cadence uDMA 与 Linux DMA API：三个同名概念别开家庭会议
+# PCIe DMA、Cadence uDMA 与 Linux DMA API：区分协议、引擎和地址映射
 
 ## 1. 先拆开三个“DMA”
 
@@ -10,7 +10,7 @@
 
 PCIe 规范主要规定第 1 层的线上行为。Cadence Chapter 5 描述一个可选集成的 Universal DMA Engine。Linux 的 `dma_alloc_coherent()`、`dma_map_single()` 则不替设备搬数据，它们负责让“设备要访问哪块内存、用哪个地址”这件事在当前平台上成立。
 
-一句不太严肃但很管用的话：Linux DMA API 负责办通行证，DMA engine 负责开卡车，PCIe TLP 是高速公路上的货运单。
+可以把三者的职责简化为：Linux DMA API 建立设备可用的地址映射和一致性语义，DMA engine 执行数据搬运，PCIe TLP 则承载跨 PCIe Link 的读写请求和返回数据。这种类比只用于区分职责，具体地址和时序仍以后文定义为准。
 
 ## 2. 普通 SoC DMA 与 PCIe DMA 的共同点和差别
 
@@ -37,7 +37,7 @@ EP 要发 Memory Request，至少需要：
 - 有效的 Host DMA address 与访问权限；
 - Function 处于允许发请求的电源/复位状态。
 
-Cadence §4.5.6 明确要求：EP 通过 AXI Slave interface 发 MRd/MWr 前，BME 必须为 1、Function 必须 D0-Active、且不处于 FLR。Linux 中 `pci_set_master()` 通常负责 BME 这一步，但精确调用链要等目标 kernel source 才能标为 Confirmed。
+Cadence §4.5.6 明确要求：EP 通过 AXI Slave interface 发 MRd/MWr 前，BME 必须为 1、Function 必须 D0-Active、且不处于 FLR。X6000 Linux 5.10.4 中，`pci_set_master()` 调用 `__pci_set_master(dev, true)` 更新 Command.Bus Master Enable，再调用 architecture hook `pcibios_set_master()`；它只打开发起事务的权限，并不启动设备内部 DMA engine。
 
 ## 4. DMA address 为什么不是随手拿个指针
 
@@ -273,5 +273,4 @@ ISR/NAPI/thread
 - Cadence PCIe Core User Guide, Chapter 5, printed pp.281–298 / PDF pp.370–387。
 - PCIe Base Specification 5.0 r1.0, Chapter 2 request/completion/ordering rules；DMA engine 本身不是 Base Spec 定义的统一模块。
 - `PCI_Express体系结构导读_王齐.pdf`, Chapter 12, especially printed pp.297–343（OCR 起始 PDF p.308）；作为实例与历史 Linux 线索，API 版本需重新验证。
-- Linux DMA API 的精确 symbol/contract/source locator：**Unknown，等待项目提供目标 Linux tree**。
-
+- X6000 Linux 5.10.4 DMA API：`include/linux/dma-mapping.h`、`kernel/dma/mapping.c` 和 `Documentation/core-api/dma-api*.rst`；外部 Host 的 IOMMU backend 与运行期 IOVA 策略仍需 Host 内核和实机日志确认。

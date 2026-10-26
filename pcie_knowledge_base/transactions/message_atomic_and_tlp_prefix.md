@@ -20,7 +20,7 @@ Cadence outbound region 可把 AXI aperture 定义成 Message TLP。Chapter 10 �
 
 AtomicOp 对目标 Memory Space 位置执行不可分割 read-modify-write，包括 FetchAdd、Swap、CAS。它是带 data 的 Non-Posted Memory transaction，必须返回 AtomicOp Completion（带原值或状态）。
 
-完整路径必须每一环都支持：Requester capability/enable、所有 routing element、Completer 对应 operand size。软件还要检查 Device Capabilities 2 / Device Control 2；不支持的正确形成请求通常应返回 UR，而不是偷偷退化成普通 read+write。
+完整路径必须每一环都支持：Requester capability/enable、所有 routing element、Completer 对应 operand size。软件还要检查 Device Capabilities 2 / Device Control 2；对于格式正确但目标不支持的请求，通常应返回 UR，不能静默地退化成普通 read+write。
 
 AtomicOp 的价值是跨 PCIe fabric 做共享计数器或同步，而不需要软件用两笔可被插队的事务。但它不自动解决 cache coherency、地址 permission 或 endian；ATS translated address 还必须具备适当权限。
 
@@ -59,7 +59,7 @@ Host CPU locked RMW
 - 原生PCIe Endpoint不支持lock，收到MRdLk必须当作UR；
 - 新software不应对I/O device使用导致locked access的CPU instruction，因为它可造成严重性能退化甚至deadlock。
 
-它和AtomicOp的根本差别是：AtomicOp是Completer针对一个memory location执行一笔不可分割RMW transaction；legacy lock则在fabric中锁住一条path，再跑read–modify–write序列。一个是手术刀，一个更像为了换一个灯泡先封路。
+它和 AtomicOp 的根本差别是：AtomicOp 由 Completer 针对一个 memory location 执行一笔不可分割的 RMW transaction；legacy lock 则在 fabric 中锁住一条 path，再执行 read-modify-write 序列。前者的原子性作用于目标地址，后者会限制相关传输路径，影响范围明显更大。
 
 当前Cadence interface对各Link的AXI `AWLOCK/ARLOCK`明确标注为不支持并忽略；inbound message table能识别Unlock Message，但手册没有给出一套可供client发起完整MRdLk sequence的编程机制。这与“原生EP不应发起lock”一致。
 
@@ -67,7 +67,7 @@ Host CPU locked RMW
 
 TPH（Transaction Processing Hints）提供 Steering Tag 等 hint，帮助平台优化 transaction processing location。它不是 routing address，也不是硬保证。Cadence 本 build 暴露 PF/VF TPH Requester capability、enable/mode outputs 和 outbound sideband字段；实际启用仍需 Host capability/policy。
 
-Hint 被忽略不应破坏功能正确性。若“不按 TPH 走就数据错”，设计已经把性能提示偷偷升级成协议依赖。
+Hint 被忽略不应破坏功能正确性。若“不按 TPH 处理就会导致数据错误”，说明实现已经错误地把性能提示当成了功能依赖。
 
 ## 5. Debug 解码顺序
 

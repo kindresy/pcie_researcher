@@ -1,5 +1,19 @@
 # FINAL COVERAGE AUDIT
 
+## 2026-10-26 复审补充
+
+本次在原覆盖审计之上，对全部 55 篇读者正文重新执行了四类检查：Base Spec 协议语义、Cadence Databook 实现语义、X6000 Linux/固件证据边界，以及当前语言与表达规范。详细过程和问题编号见 [全库正文复审台账](research_notes/2026-10-26-full-corpus-spec-databook-style-rereview.md)。
+
+本轮确认并修正了三类实质问题：
+
+1. BootROM 专题把 MPS 写成 RC 枚举后的“协商”。MPS 实际由配置软件依据 hierarchy 能力和策略设置，并非 LTSSM 自动协商。
+2. Memory Read 调试文档笼统写成“必须返回 CplD”。成功读使用 CplD；UR/CA 等失败通常返回不带数据的 Completion，完全无返回才可能形成 CTO。
+3. 多篇早期正文仍声称 workspace 没有目标 Linux source。当前已经存在 X6000 Linux 5.10.4、commit `e74fd0e7746a`，因此 `pci_enable_device()`、`pci_set_master()`、`pci_iomap()`、Host `pci_ops`、EPC/EPF、MSI domain、ROM、PTM、SR-IOV、DPC 和 DMA API 已改用目标源码说明。外部 Host 平台仍作为独立证据边界保留。
+
+语言复审收敛了口号式标题、连续比喻和“玄学、偷偷、魔法数字”等容易遮挡技术含义的表达，同时保留少量确实有助于建立直觉的类比。新增 [正文文章索引](ARTICLE_INDEX.md)，逐篇说明 55 篇正文的用途。
+
+复审后的机械检查结果：知识库共有 94 份 Markdown、13698 行；本地 Markdown/image 链接 0 断链，代码围栏 0 个不配对，正文风格风险词 0 命中，内部 IP 文本 0 命中。原审计中记录的“77 篇 Markdown”和“当时缺少 Linux source”是 2026-08-23 的历史状态，不能再当作当前工程现状。
+
 > 2026-08-27新增的X6000六仓代码已另行执行完整审计：
 > [X6000六仓 PCIe Final Coverage Audit](research_notes/x6000_multirepo_final_coverage_audit.md)。
 > 本文以下内容是此前规范/Databook/教材证据集的审计，两份报告共同构成当前最终覆盖状态。

@@ -1,4 +1,4 @@
-# Link Not Up：按 LTSSM 停在哪一站查，不要靠玄学换线
+# Link Not Up：根据 LTSSM 状态定位问题
 
 ## 1. 先定义“没起来”是哪一种没起来
 

@@ -1,4 +1,4 @@
-# BDF、Requester ID 与层次路由：地址牌是谁贴的，包又靠什么回家
+# BDF、Requester ID 与层次路由
 
 ## 1. BDF 是软件名字，也是协议身份的来源
 
@@ -21,7 +21,7 @@ PCI_SLOT(devfn); PCI_FUNC(devfn);
 
 segment/domain 不在 16-bit PCIe Requester ID 里；它由 Host/软件在多个 hierarchy/segment 之间消歧。
 
-## 2. Bus/Device Number 不是 EP 烧死的序列号
+## 2. Bus/Device Number 不是 EP 固化的设备序列号
 
 Bus number 和 bridge 的 Secondary/Subordinate range由枚举软件分配，热插拔/重配置时可以变化。直连非 ARI Endpoint 在该 Link 逻辑 bus 上通常是 Device 0；Function 0–7 表示同一 device 的多个 Function。
 
@@ -95,5 +95,4 @@ PF `01:00.0` 与 VF（ARI Function 9）都向 IOVA `0x8000_0000` 发 MRd。即�
 - PCIe Base Specification 5.0 r1.0, §§2.2.4.2、2.2.6.2–.3、2.3.2、7.3.1。
 - PCIe Base Specification 5.0 r1.0, §6.13 ARI；§7.2 ECAM。
 - Cadence PCIe Core User Guide, §§10.3.1、10.5.1。
-- Ubuntu 6.8 headers, `include/uapi/linux/pci.h:31–33`、`include/linux/pci.h` public declarations。
-
+- X6000 Linux 5.10.4：`include/uapi/linux/pci.h`、`include/linux/pci.h` 及 `drivers/pci/` 中的 BDF/devfn helpers 和枚举实现。

@@ -1,4 +1,4 @@
-# PCIe Hot Plug 与突然拔卡：一个是交接离职，一个是工位突然空了
+# PCIe Hot Plug 与异步移除：有序下线和突然断开
 
 ## 1. 两种“设备不见了”必须先分开
 
@@ -15,7 +15,7 @@
 
 ### Async removal
 
-卡、线缆或Downstream Link在OS同意前已经消失。此时在途MRd可能永远没有Completion，Posted MWr是否落地也可能无法判断，Requester会看到CTO，Port可能记录Receiver/Bad TLP/Bad DLLP/Surprise Down。软件做的是containment与恢复，不存在把时间倒回去补一次优雅quiesce的魔法。
+卡、线缆或 Downstream Link 在 OS 同意前已经消失。此时在途 MRd 可能无法收到 Completion，Posted MWr 是否到达也可能无法判断；Requester 会看到 CTO，Port 可能记录 Receiver Error、Bad TLP、Bad DLLP 或 Surprise Down。软件只能在事件发生后进行 containment 与恢复，无法补做移除前本应完成的 quiesce。
 
 早期教材称presence pins会先断开，给software“足够时间”在其他触点断开前关电。现代Base Spec 5.0 §6.7.6对async removal的定义恰恰强调：hierarchy和OS不一定提前知道，必须按已经发生的异步事件处理。那句2003年的乐观描述不能作为驱动安全保证。
 
@@ -110,7 +110,7 @@ Function driver应保证：
 - async removal后不等待永远不会到的device completion；
 - recovery与正常remove可区分“设备还活着能quiesce”和“只能本地清理”。
 
-workspace没有目标kernel tree，因此`pciehp`的具体版本调用链、firmware ownership与irq-domain实现保持Unknown。
+X6000 Linux 5.10.4 中的通用 hot-plug 路径可在 `drivers/pci/hotplug/pciehp_*` 和 `drivers/pci/pcie/portdrv_*` 中确认；DPC 路径见 `drivers/pci/pcie/dpc.c`。不过，外部 Host 是否启用 pciehp/DPC、firmware 是否保留控制权，以及实际 irq-domain 拓扑仍取决于 Host 平台，当前保持 Unknown。
 
 ## 8. Debug：设备突然消失时留什么
 

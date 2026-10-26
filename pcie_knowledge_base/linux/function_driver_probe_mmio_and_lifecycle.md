@@ -58,7 +58,7 @@ module_pci_driver(demo_driver);
 - ioremap BAR；那是 `pci_iomap()`/managed mapping；
 - 启用设备内部 DMA queue/interrupt source。
 
-现代 6.x 精确内部调用链需要 `drivers/pci/pci.c`，当前只有 header，故不写伪行号。
+在 X6000 Linux 5.10.4 中，调用链为 `pci_enable_device()` → `pci_enable_device_flags()` → `do_pci_enable_device()`。后者先调用 `pci_set_power_state(dev, PCI_D0)`，再通过 `pcibios_enable_device()` 启用相应 resource；arm64 未覆盖该 weak hook 时，最终进入 `pci_enable_resources()` 更新 Command Register 的 I/O Space Enable 或 Memory Space Enable。它还会处理上游 bridge、enable 引用计数、fixup，以及未启用 MSI/MSI-X 时的 INTx Disable 状态。这个调用并不设置当前 Function 的 BME。
 
 ## 3. `pci_set_master()` 与 Bus Master Enable
 
@@ -152,7 +152,7 @@ stop queues / block new I/O
 
 ## 10. Source Reference 与证据等级
 
-- **Confirmed declarations/comments**：Ubuntu 6.8 headers `include/linux/pci.h` 与 `include/asm-generic/pci_iomap.h`。
+- **Confirmed target implementation**：X6000 Linux 5.10.4 `drivers/pci/pci.c` 中的 `pci_enable_device_flags()`、`do_pci_enable_device()`、`pci_request_selected_regions()`、`pci_set_master()`；`lib/pci_iomap.c` 中的 `pci_iomap()`；`drivers/pci/pci-driver.c` 中的 driver registration/binding。
+- **Confirmed declarations/comments**：X6000 Linux `include/linux/pci.h` 与 `include/asm-generic/pci_iomap.h`。
 - **Confirmed hardware behavior**：Base Spec 5.0 Command/BAR/Memory transaction；Cadence address translation。
-- **Unknown exact Linux implementation**：缺 `drivers/pci/*.c` 和目标 architecture/kernel commit。
-- **Historical cross-check**：王齐《PCI Express 体系结构导读》第 14 章使用约 Linux 2.6.31 的代码展示 `__pci_enable_device_flags → do_pci_enable_device → pcibios_enable_device` 和 x86/PowerPC host initialization。该调用链只帮助理解职责分层，不视为现代 6.8 证据；printed pp.365–416 / PDF pp.377–428。
+- **Historical cross-check**：王齐《PCI Express 体系结构导读》第 14 章使用约 Linux 2.6.31 的代码展示早期调用链和 x86/PowerPC host initialization。它只用于观察接口演变；本项目结论以 X6000 的 5.10.4 源码为准。printed pp.365–416 / PDF pp.377–428。

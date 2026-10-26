@@ -1,6 +1,6 @@
 # BootROM PCIe 全分支差异矩阵
 
-> 本文比较 `source_repos/bootrom` 的 21 个远端分支。判断依据是分支 tip 的实际 PCIe 源码 blob、构建条件和调用点，不根据分支名脑补功能。
+> 本文比较 `source_repos/bootrom` 的 21 个远端分支。判断依据是分支 tip 的实际 PCIe 源码 blob、构建条件和调用点；分支名只用于定位，不能单独证明功能差异。
 
 ## 1. 怎么读这份矩阵
 

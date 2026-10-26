@@ -1,6 +1,6 @@
 # PCIe Spec ↔ Cadence Databook ↔ Linux Mapping
 
-这张表维护三种语言之间的翻译：规范概念、Cadence 硬件实现、软件动作。workspace 缺 Linux source；本机 Ubuntu 6.8 headers 只能确认公开对象/API，不能冒充特定版本实现调用链。
+这张表维护三种语言之间的翻译：规范概念、Cadence 硬件实现、软件动作。当前 X6000 Linux source 固定为 5.10.4、commit `e74fd0e7746a`；通用 PCI core、Cadence 风格 controller、EPC/EPF 和目标 glue 可以追到源码。外部 Host 服务器的内核、IOMMU 和 MSI remapper不在该证据范围内，不能用设备侧内核代替。
 
 证据等级：**C** Confirmed，**I** Inferred，**U** Unknown/待验证。
 
@@ -14,7 +14,7 @@
 | Bifurcation / multiple Root Ports | topology/link rules | §§4.9、6；`LANE_MAP_MODE` | 16 PHY Lane 静态分给 1–4 个独立 core；各自训练/寄存器 | platform driver 按活动 Link 初始化并各建 host bridge/port；目标 glue 缺失 | C core / U SoC |
 | Config vs private register space | Chapter 7 config model | Table 9.1；§§9.1–9.24 | APB 译码 PF/VF/RP Config、LM、AXI Config、DMA | host driver写私有空间；PCI core/Function driver经 config ops 写标准空间 | C boundary / U target offsets |
 | Configuration Space | Chapter 7；§1.4 | §§4.5.5–.6；Chapter 9 | 每 Function config、RP Type0/1 generation | Linux `pci_ops` → aperture/ECAM → Config TLP | C/U target ops |
-| Enumeration | §1.4 + Chapters 6/7 | RP config request path、bus routing | Config Request/Cpl、bridge bus/window | PCI core 扫 BDF、递归 bus、分 resource；精确源码缺失 | C protocol / U implementation |
+| Enumeration | §1.4 + Chapters 6/7 | RP config request path、bus routing | Config Request/Cpl、bridge bus/window | X6000 5.10.4 `pci_host_probe()` 进入 PCI core 扫描、资源分配和设备注册；Host glue 提供 `pci_ops` | C protocol / C target implementation |
 | BAR | §7.5.1.2；§1.3.2.2 | §§4.5.5–.6 + PF/VF BAR config | Function+BAR inbound hit、RC BAR/no-match、translation | sizing/allocation；`pci_iomap()` → CPU MMIO → MWr/MRd | C |
 | Expansion ROM / Option ROM | §7.5.1.2.4；§7.8.5；§9.3.4.1.15 | §9.2.1.1.13、§9.8.1.1.13 | 当前PF offset 0x30为Not Implemented/RO zero；通用request编码不等于ROM BAR存在 | firmware/PCI core对ROM单独建模；非`pci_iomap(BAR0)` | C absent in build / U firmware policy |
 | Memory Write | Chapter 2 | §§4.5.2、4.5.6 | inbound AXI Master / outbound AXI Slave Posted path | `writel()` 或 DMA write → MWr；无普通 Cpl | C |

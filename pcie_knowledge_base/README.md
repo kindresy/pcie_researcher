@@ -9,12 +9,13 @@
 ## 建议从哪里开始
 
 1. 先读 [学习路线](LEARNING_PATH.md)，知道哪些概念是后面内容的地基。
-2. 阅读 [PCIe 世界观：拓扑、角色与三层协议](fundamentals/overview_topology_and_layers.md)。
-3. 遇到缩写随时查 [术语表](GLOSSARY.md)，不用和字母汤硬碰硬。
-4. 进入配置、枚举、BAR 与地址翻译，理解 Linux 为什么能“看到”设备。
-5. 再学习 TLP、Completion、DMA、MSI/MSI-X、LTSSM、错误与电源管理。
-6. 最后进入 `linux/` 和 `controller/`，把软件调用链映射到真实硬件模块。
-7. 若目标是 X6000，进入 [X6000 综合 PCIe 架构](code_studies/x6000_integrated_pcie_architecture.md)，
+2. 需要按问题查找文章时，使用 [正文文章索引](ARTICLE_INDEX.md)。
+3. 阅读 [PCIe 世界观：拓扑、角色与三层协议](fundamentals/overview_topology_and_layers.md)。
+4. 遇到陌生缩写时随时查 [术语表](GLOSSARY.md)，先确认术语含义，再继续阅读调用链或寄存器说明。
+5. 进入配置、枚举、BAR 与地址翻译，理解 Linux 为什么能“看到”设备。
+6. 再学习 TLP、Completion、DMA、MSI/MSI-X、LTSSM、错误与电源管理。
+7. 最后进入 `linux/` 和 `controller/`，把软件调用链映射到真实硬件模块。
+8. 若目标是 X6000，进入 [X6000 综合 PCIe 架构](code_studies/x6000_integrated_pcie_architecture.md)，
    再按其中的七阶段源码路线阅读六个仓库。
 
 ## 目录各自负责什么
@@ -39,7 +40,7 @@
 
 目录已经按完整知识体系预留，但空目录不算完成；实际覆盖状态以 [PROGRESS.md](PROGRESS.md) 为准。
 
-想先看整套机制怎样串起来，可以直接读 [一个 Endpoint 的一天：上电、枚举、MMIO、DMA 与 MSI-X](examples/endpoint_from_power_on_to_dma_and_msix.md)，再回到各专题补原理。
+想先看整套机制怎样串起来，可以直接读 [Endpoint 完整工作流程：从 PERST# 到 DMA 完成和 MSI-X](examples/endpoint_from_power_on_to_dma_and_msix.md)，再回到各专题补原理。
 
 ## Spec、Databook 与 Linux 怎么配合读
 

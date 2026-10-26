@@ -3,7 +3,7 @@
 > 本文是六仓研究的汇合点，不替代各仓专题。第一次读可以顺着“总体图→四条真实路径→
 > 阅读路线”走；调试时则直接查所有权、地址或故障边界。
 
-## 1. 一句话结论
+## 1. 整体结论
 
 X6000 PCIe 不是“设备 Linux 里有一个 PCI 驱动”这么简单。它是一套跨 Host 用户态、
 Host 内核、外部 Root Complex、X6000 对外 Endpoint、板内 C2C Root Complex/Endpoint、
@@ -96,7 +96,7 @@ A8 RC → B0 EP → local die/group resource
 
 各层主要职责：
 
-| 层 | 知道什么 | 不应偷偷承担什么 |
+| 层 | 已知信息 | 不属于该层的职责 |
 |---|---|---|
 | CLI | 产品、group、测试意图、镜像顺序 | 不直接猜BAR物理地址 |
 | HAL | ioctl ABI、mmap offset、boot stage | 不绕过驱动管理DMA mapping |

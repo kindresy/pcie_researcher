@@ -72,15 +72,15 @@ Cadence core guide：
 - 提供 PF/VF configuration register sets、VF BAR configuration、Function power/FLR/MSI/MSI-X/ATS sidebands；
 - signal widths 显示部分 Link 配置为每 PF 关联最多 8 个 VF 的接口集合，但每 Link/parameter 精确数量必须按 configuration tables/registers核对。
 
-static inputs 必须在 MGMT reset 释放前稳定，因为会影响 capability linked-list initialization。软件无法在运行后把一个未综合/未初始化的 SR-IOV core 凭空变出来。
+static inputs 必须在 MGMT reset 释放前稳定，因为会影响 capability linked-list initialization。若 SR-IOV 逻辑未在硬件构建阶段实现，或未在初始化阶段接入 capability 链，运行期软件无法仅靠写寄存器补出这项能力。
 
 来源：Cadence §§2.1、3.x configuration signals、Chapter 9 PF/VF register sets。
 
 ## 7. Linux 边界
 
-本机 Ubuntu 6.8 `struct pci_driver` 包含 PF driver 的 `sriov_configure`、VF MSI-X vector count 等 callbacks；`struct pci_dev` 在相关 config 下用 `sriov/physfn` 关联 PF/VF。
+X6000 Linux 5.10.4 的 `struct pci_driver` 包含 PF driver 的 `sriov_configure` 等 callbacks；`struct pci_dev` 在相关配置下通过 `sriov/physfn` 关联 PF/VF，通用 SR-IOV 管理实现位于 `drivers/pci/iov.c`。
 
-典型管理接口 `/sys/bus/pci/devices/.../sriov_numvfs` 属于 PCI core/SR-IOV framework。实际 enable 流程、VF BAR allocator、IOMMU/VFIO 接线需要目标 kernel source，当前不写精确行号。
+典型管理接口 `/sys/bus/pci/devices/.../sriov_numvfs` 属于 PCI core/SR-IOV framework。通用 enable 流程和 VF resource 管理可以从 `drivers/pci/iov.c` 追踪；但 X6000 实际硬件 build 是否启用 SR-IOV，以及外部 Host 的 IOMMU/VFIO 接线，仍需 capability dump、Host kernel 和部署配置确认。
 
 ## 8. 安全和 debug
 
@@ -97,5 +97,4 @@ static inputs 必须在 MGMT reset 释放前稳定，因为会影响 capability 
 - PCI Express Base Specification 5.0 r1.0, §6.13, printed/PDF pp.590–592。
 - PCI Express Base Specification 5.0 r1.0, Chapter 9, printed/PDF pp.1099–1168。
 - Cadence PCIe Core User Guide, §§2.1、3.x、Chapter 9 PF/VF register blocks。
-- Ubuntu 6.8 header `include/linux/pci.h` SR-IOV fields/callbacks。
-
+- X6000 Linux 5.10.4：`include/linux/pci.h`、`drivers/pci/iov.c`。

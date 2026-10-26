@@ -1,10 +1,10 @@
-# X6000 PCIe 启动交接：同一条 Link，四拨软件轮流接班
+# X6000 PCIe 启动交接：同一条 Link 上的四阶段状态移交
 
 > 适用代码版本见 [代码仓来源索引](SOURCE_REPOSITORY_INDEX.md)。本文把 BootROM、PCS、
 > ATF BL2、设备 Linux 与 Host 工具放在同一条时间线上。它重点回答的不是“各阶段调用
 > 了哪个函数”，而是：**前一阶段留下了什么硬件状态，后一阶段相信了什么，又覆盖了什么。**
 
-## 1. 先建立直觉：PCIe Link 不是每换一段固件就重新插一次卡
+## 1. 基本模型：固件切换不等于重新建立 PCIe Link
 
 X6000 从 PCIe 下载启动时，外部 Host 已经枚举了这个 Endpoint（EP，PCIe 端点）。
 BootROM 把 PHY 和 Link 拉起来、让 BAR0 可访问；PCS、BL2 和 Linux 随后在同一颗芯片
@@ -17,8 +17,9 @@ DE12 → ATF BL2 ready
 DE14 → Linux runtime ready
 ```
 
-这里很像一间 24 小时营业的机房：网线一直插着，值班人员换了四班；麻烦在于每班人
-会重新贴门牌（APT），却还沿用同一扇大门（BAR0）。
+Link 与 Host 侧 BAR resource 可以跨阶段保持不变，但每一阶段都可能重写 APT，使同一
+BAR offset 指向不同的本地目标。因此，阶段切换的核心风险不是重新枚举，而是地址映射
+和状态所有权是否完成了明确移交。
 
 ## 2. 端到端时间线
 
@@ -114,7 +115,7 @@ PCS 并不重新演一遍完整建链流程。它保留 BootROM 已经在线的 
 这带来一个非常工程化的约束：重写 APT 时 Host 必须安静。源码没有看到围绕每个
 APT register update 的强制总线握手，安全性依赖工具只在识别到新 magic 后访问新
 布局。若 Host 正在对被改写的 offset 做 MMIO，TLP 可能命中旧目标或新目标——这种
-问题的复现概率往往很有“玄学气质”，但原因并不玄学。
+这类问题的复现概率可能很不稳定，但背后通常存在明确的时序竞争。
 
 PCS 仍复用四个 SRAM 地址：
 
@@ -162,7 +163,7 @@ Host 直接枚举的 Function，因此 B0 的通知需要 A8/A0 中继。
 这里存在一处仍需部署证据验证的交接：主 EPC driver 创建 controller，却没有在
 六仓中找到创建/bind/start `pci_epf_edge` 的 configfs 脚本。Host driver 要求最多
 49 个 MSI-X vector；EPF 的 `msix_interrupts` 必须由外部配置到相应数量。脚本很可能
-在 rootfs/产品部署仓，而不是当前六仓。这个缺口不能靠“看起来应该如此”偷偷补上。
+在 rootfs 或产品部署仓，而不在当前六个仓库中。缺少这部分证据时，不能根据预期部署方式直接补写结论。
 
 ## 8. Host 侧怎样知道该用哪套协议
 

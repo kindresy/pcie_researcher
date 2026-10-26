@@ -1,4 +1,4 @@
-# 一个 Endpoint 的一天：从 PERST# 到 DMA 完成和 MSI-X
+# Endpoint 完整工作流程：从 PERST# 到 DMA 完成和 MSI-X
 
 这是一台虚构但协议上自洽的设备。我们用同一组 BDF、BAR 和地址走完整条链，免得每章换一套数字，读到最后像接手了三块不同的板子。
 
@@ -24,7 +24,7 @@ BAR2 PCI / CPU physical   0x8001_0000 / 0x4_8001_0000
 
 最初还没有 `01:00.0` 这个身份：refclk/power/reset/PHY 按平台时序准备；EP 配好 Configuration Space 模板与 BAR aperture；Cadence RP 在 training disabled 时写有效的 Gen3/4 preset、LM 与必要 region；两端 LTSSM 再从 Detect 经 Polling/Configuration 进入 L0，Data Link 对 VC0 完成 InitFC。
 
-此时只说明 Link 能传包。EP 还没被 OS 命名、BAR 还没分配、驱动也没 probe。Link Up 像楼通电了，不代表每家公司都领到了门牌和钥匙。
+此时只能说明 Link 已具备传输 packet 的条件。EP 还没有被 OS 枚举，BAR 尚未分配，Function driver 也没有进入 probe；Link Up 不等于设备已经可以执行正常业务。
 
 ## 2. 枚举：`01:00.0` 怎样出现
 
@@ -193,7 +193,7 @@ MSI-X 仍是 Posted MWr，不返回普通 Completion。Linux IRQ number 也不�
 3. 按 Requester ID + Tag 接收并归位可能交错返回的 CplD，直到 Byte Count/Lower Address 表明各 request 收齐再释放 Tag；
 4. 用多个 MSI-X vector 或 DMA completion record 表达完成原因，尽量避免 ISR 为了“你叫我干吗”再做一次高延时 MMIO Read。
 
-这里有一笔不能省的硬件账：多发 outstanding MRd 意味着接收端必须为最坏情况下的 Completion header/data、Tag context 和 backpressure 准备资源。Tag 数量不是免费的性能旋钮；Cadence 的 two-stage Completion buffer 和限流规则正是在付这笔账。
+增加 outstanding MRd 数量需要相应的硬件资源：接收端必须为最坏情况下的 Completion header/data、Tag context 和 backpressure 准备容量。因此，增加 Tag 数量并非没有代价；Cadence 的 two-stage Completion buffer 和限流规则正是用于管理这些资源。
 
 来源：王齐《PCI Express体系结构导读》Chapter 12，尤其 §§12.2.2、12.4；Cadence §11.4 Completion buffer integration。
 

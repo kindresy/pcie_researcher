@@ -27,7 +27,7 @@ Configuration Space 用于标准化发现、资源和能力管理。设备运行
 
 ## 3. Type 0 与 Type 1 Header
 
-### 3.1 Type 0：Endpoint/普通 Function 的“身份证首页”
+### 3.1 Type 0：Endpoint 和普通 Function 的配置头
 
 ![Type 0 Configuration Space Header](../assets/source_figures/type0-header-spec-p696-crop.png)
 
@@ -155,7 +155,7 @@ Extended Capability 从 0x100 起，每项有 Extended Capability Header 和 nex
 
 驱动不能假定某能力固定在某 offset；应通过 OS API 遍历 capability。Cadence 特定配置可能给某些能力固定实现位置，但那是实现事实，不会把标准遍历规则取消。
 
-## 8. Linux 视角（待源码确认的边界）
+## 8. Linux 视角与 X6000 配置访问路径
 
 Linux driver 应使用 PCI core API 访问配置空间，不应直接手算 ECAM：
 

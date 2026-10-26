@@ -1,4 +1,4 @@
-# Cadence Reset 与恢复矩阵：不是所有 Reset 都会把世界洗白
+# Cadence Reset 与恢复矩阵：区分不同 Reset 的作用范围
 
 ## 1. 先按作用域分 reset
 
@@ -66,7 +66,7 @@ FLR 不清 Local Management，也不清 AXI Address Translation。共享这些�
 
 ## 5. Linux 恢复映射
 
-Linux Function reset、AER error recovery、hotplug/remove 和 host-controller Link recovery 是不同入口。共同原则是：先阻止新 I/O，再 drain/abort outstanding，再按 reset scope 重建 resource/IRQ/DMA。目标 kernel source 和 Cadence SoC glue 缺失，无法确认谁清具体 Link Down Indication offset；该点保留 Unknown。
+Linux Function reset、AER error recovery、hotplug/remove 和 host-controller Link recovery 是不同入口。共同原则是：先阻止新 I/O，再 drain/abort outstanding，再按 reset scope 重建 resource/IRQ/DMA。X6000 Linux 5.10.4 已提供 PCI core、AER/DPC 和 `pcie-edge*.c`；但源码中尚未以 Cadence Databook 的字段名闭合“由谁清 Link Down Indication”这一动作，仍需用目标寄存器 offset、wrapper 定义和故障注入 trace 对照，因此该点保留 Unknown。
 
 ## 6. Source Reference
 

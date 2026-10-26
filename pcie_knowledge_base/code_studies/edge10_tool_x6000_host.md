@@ -15,7 +15,7 @@
 - Hot Reset、remove/rescan 和 AER blocklist 运维工具；
 - 多 die/group 状态、温度、异常、串口日志等板卡诊断前端。
 
-把它只叫“测试工具”有点委屈。它更像 Host 侧 PCIe 控制台，只是菜单特别长，第一次打开像饭店把后厨采购单也印在了菜单背面。
+它不只是单项测试程序，更接近 Host 侧的 PCIe 控制台：既包含面向使用者的测试命令，也暴露了不少寄存器、DMA 和调试入口。第一次阅读时应先按数据路径分类，而不是从命令列表顺序阅读。
 
 ## 2. 源码分层
 
@@ -442,7 +442,7 @@ ring pointer 与 payload 之间没有 compiler/CPU barrier；仅靠普通 C load
 6. download `firmware.c` + `core.c`：理解跨阶段下载；
 7. BootROM/PCS/ATF 对端代码：闭合 ready flag、APT 和 bulk buffer；
 8. `scan.c` 与 `hal_dcmi.c`：理解设备身份、reset和运维；
-9. 最后按问题选读 `debug.c`，不要一开始硬啃四千行寄存器菜单。
+9. 最后按具体问题选读 `debug.c`，不必从头顺序阅读四千行寄存器操作。
 
 ## 15. Source Reference
 
@@ -458,4 +458,3 @@ ring pointer 与 payload 之间没有 compiler/CPU barrier；仅靠普通 C load
 - HAL `download/download/{init,firmware,core}.c`：X6000固件清单、阶段与bulk协议。
 - HAL `download/comm/{comm,boot_stage}.c`：PCIe transport和状态轮询。
 - Driver `pcie/edge.[ch]`：所有用户 ABI 的内核实现。
-

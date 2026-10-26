@@ -145,7 +145,7 @@ Appendix H 给出了这份 **controller configuration** 的精确链表。这个
 
 普通 function driver 大多只使用 DMA API，IOMMU core 自动按 `struct device`/Requester ID 建 domain。ATS/PASID/PRI/SVA 需要 PCI core、IOMMU driver、设备 driver 共同协商，不能由 driver 只写一个 capability bit 就宣布成功。
 
-本机 Ubuntu 6.8 `struct pci_dev` 可确认存在 `ats_cap/ats_stu`、`pri_cap/pri_reqs_alloc`、`pasid_cap/pasid_features` 字段；目标实现源码缺失，精确 API/call chain 标 **Unknown**。
+X6000 Linux 5.10.4 的 `struct pci_dev` 包含 `ats_cap/ats_stu`、`pri_cap/pri_reqs_alloc` 和 `pasid_cap/pasid_features` 等状态；对应通用实现位于 `drivers/pci/ats.c`，IOMMU 侧位于 `drivers/iommu/`。不过，X6000 设备内核的配置和目标 DTS 并不能证明外部 Host 已为该 EP 启用 ATS/PASID/PRI；实际链路仍需 Host 内核配置、IOMMU driver 和 capability dump 共同验证。
 
 ## 9. Debug
 
@@ -164,4 +164,4 @@ Appendix H 给出了这份 **controller configuration** 的精确链表。这个
 - 王齐《PCI Express体系结构导读》，§13.2，printed pp.352–358 / PDF pp.364–370（作为早期ATS解释及安全边界校正样本）。
 - Cadence PCIe Core User Guide, ATS/PASID/PRI signal descriptions and Chapter 9 register sets。
 - Cadence PCIe Core User Guide, Appendix H, Figure H.1 and Tables H.1–H.4, PDF pp.1458–1462（文档页 1369–1373）。
-- Ubuntu 6.8 header `include/linux/pci.h` ATS/PRI/PASID fields。
+- X6000 Linux 5.10.4 `include/linux/pci.h`、`drivers/pci/ats.c` 与 `drivers/iommu/`。

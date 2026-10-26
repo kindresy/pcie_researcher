@@ -156,7 +156,7 @@ MSI-X data 是 32 bit，并且设备不能像 MSI 那样自行修改低位。
 
 来源：Base Spec 5.0 §§7.7.2–7.7.2.9，printed/PDF pp.781–789；Cadence §§4.5.6.6.7、4.6.1，printed pp.269–270、273–274 / PDF pp.358–359、362–363。
 
-## 6. Cadence 实现：标准 Capability 只是“菜单”，client logic 还得下厨
+## 6. Cadence 实现：标准 Capability 与 client logic 的分工
 
 对这份 Cadence Dual-Mode core，EP 的 MSI/MSI-X generation 不是简单拉一根 `msi_req` 就全部完成。手册给出的路径是：
 
@@ -281,7 +281,8 @@ EP client 读 entry[5]
 - **Confirmed**：MSI/MSI-X 是 1 DW Memory Write；capability/table/PBA 字段和 mask 规则；Base Spec §§7.7.1–7.7.2。
 - **Confirmed**：Cadence EP client 经 AXI outbound region 生成 MSI/MSI-X，RP 经 AXI Master 接收；Cadence §§4.5.6.6.6–.7、4.6。
 - **Inferred**：一个具体 SoC 会在 Cadence AXI Master 之后接专用 MSI controller 或 interrupt remapper。这是常见集成，但不能从当前 core-only databook 确认。
-- **Unknown**：目标 Linux 版本的精确 PCI/MSI/irq-domain 调用链，以及目标 SoC 的 MSI address decode。需要 kernel source、SoC TRM 和 interrupt-controller 文档。
+- **Confirmed target Linux path**：X6000 Linux 5.10.4 的通用 vector 分配在 `drivers/pci/msi.c`，IRQ domain 基础在 `kernel/irq/msi.c`；X6000 RC 侧 `pcie-edge-host.c` 创建 MSI domain，EP 侧 `pcie-edge-ep.c` 实现 `raise_irq`。
+- **Unknown external Host path**：外部服务器的 MSI target address、interrupt remapping/IOMMU policy 和最终 CPU interrupt-controller 路径不在当前仓库中，需要 Host kernel、平台文档和实机中断状态。
 
 ## 12. Source Reference
 

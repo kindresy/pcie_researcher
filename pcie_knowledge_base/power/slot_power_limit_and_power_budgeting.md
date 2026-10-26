@@ -1,4 +1,4 @@
-# Slot Power Limit 与 Power Budgeting：设备想吃多少，插槽最多给多少
+# Slot Power Limit 与 Power Budgeting：设备需求与插槽额度
 
 ## 1. 先把三个相似名字拆开
 
@@ -8,7 +8,7 @@
 | Slot Power Limit | 当前slot允许adapter最多消耗多少功率？ | Downstream Port通过寄存器和Message告诉Upstream Port |
 | DPA | Function留在D0时，软件选择哪个动态功耗substate？ | Host写Function DPA Control，client执行 |
 
-一句人话版：Power Budgeting像设备递菜单，Slot Power Limit像餐厅告诉你本桌最高消费额度，DPA则是在已经开席后切“省电/性能套餐”。它们互相关联，但绝不是同一个寄存器换了三套名字。
+Power Budgeting 描述设备在不同状态下的功耗需求，Slot Power Limit 给出插槽允许的上限，DPA 则用于设备保持 D0 时选择动态功耗档位。三者相互关联，但对象、信息方向和控制时机并不相同。
 
 ## 2. Power Budgeting Capability 报告什么
 
@@ -60,9 +60,9 @@ H.1明确列出PF0 Power Budgeting Capability位于`0x160`：
 | 2 | D3hot |
 | 3 | D1 maximum |
 
-这些register对Host表现为标准read-only/selector字段，但integrator可从Local Management/APB侧为每个PF定制内容。VF不得实现Power Budgeting Extended Capability，它的预算由PF/平台总体管理。
+这些 register 对 Host 表现为标准 read-only/selector 字段，但 integrator 可从 Local Management/APB 侧为每个 PF 定制内容。VF 不得实现 Power Budgeting Extended Capability，它的预算由 PF 和平台总体管理。
 
-Appendix F.3给的四条默认记录都以Base Power `0xF0`、Scale `0`开头，即报告240 W量级；手册明确要求customer按应用修改。对于多数实际endpoint，这显然应当被当成**交付模板值**，不是芯片测出来的真实功耗。把默认值原样交给OS，等于设备在入职表上把期望工资写成了模板示例。
+Appendix F.3 给出的四条默认记录都以 Base Power `0xF0`、Scale `0` 开头，即报告约 240 W；手册明确要求 customer 按应用修改。这个数值是 IP 配置模板的一部分，并不是芯片的实测功耗。产品集成时必须根据实际硬件重新填写，不能把默认值原样暴露给 OS。
 
 ### RP 发送、EP捕获limit
 
@@ -90,7 +90,7 @@ Controller负责传递和捕获额度，不会替device client自动把功耗压
 - suspend/resume、hot reset或Link重建后重新确认捕获的limit/context；
 - 不把D-state、ASPM、DPA和slot power limit混作一个“power level”。
 
-workspace没有目标kernel tree、ACPI/DT和hot-plug controller driver，所以具体policy owner与调用链保持Unknown。公开register语义能够确认，项目平台如何做预算不能凭空补齐。
+X6000 Linux 5.10.4 已提供通用 PCI core 和 `pciehp` 源码，但外部 Host 的 ACPI/DT、firmware policy 和实际 hot-plug controller 配置不在当前仓库中。因此，通用调用入口可以追踪，具体产品由谁制定并执行功耗预算仍保持 Unknown。
 
 ## 6. Debug清单
 

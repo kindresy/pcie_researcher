@@ -2,7 +2,7 @@
 
 > 研究对象：`source_repos/atf`，分支 `x6000`，commit `98ac1eb5984ad69fc42860abbc9ed70346f240a8`（2026-03-20）。本文只讨论与 PCIe 有直接关系的 BL2 代码。
 
-## 1. 一句话定位
+## 1. ATF 阶段的职责
 
 X6000 的 ATF 仓库里，PCIe 有三份看似相似、实际职责完全不同的工作：
 
@@ -110,7 +110,7 @@ Host BAR write / DMA
   → send R_RCV_DONE(download_cnt)
 ```
 
-这里的 `+ 0x200000000` 是设备 SoC 地址域中的 DDR 基址修正，不是 PCIe Spec 规定的魔法数字。Host 传的是镜像约定的 `load_addr`；BL2 把它放进自己可寻址的 DDR 空间。
+这里的 `+ 0x200000000` 是设备 SoC 地址域中的 DDR 基址修正，并非 PCIe Spec 定义的固定值。Host 传入镜像协议约定的 `load_addr`；BL2 再把它换算到自身可寻址的 DDR 空间。
 
 `download_cnt` 还承担隐含的协议顺序：代码注释把 0–4 解释成 `fip-bh-1`、`fip-bh-7`、`fip-bh-8`、`fip-bh-0`、`boot_diex-bh.img`。Host 与固件因此不只有“包格式 ABI”，还有“第几轮下载是什么镜像”的时序 ABI。
 

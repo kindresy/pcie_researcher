@@ -246,7 +246,7 @@ Power / refclk / reset / PHY initialization
 - [Data Link ACK、Replay 与 Flow Control](link/data_link_ack_replay_and_flow_control.md)
 - [Link Not Up 分层排障](debug/link_not_up.md)
 
-Cadence Chapter 9 的计数器、credit、LCRC/ECC、mask-change 和 equalization monitor 已按“动作寄存器/观测寄存器”反向归档；见 [Chapter 9反向寄存器审计](research_notes/cadence_chapter9_reverse_register_audit.md)。这些寄存器告诉你故障靠近哪一层，不会替你凭空画出眼图。
+Cadence Chapter 9 的计数器、credit、LCRC/ECC、mask-change 和 equalization monitor 已按“动作寄存器/观测寄存器”反向归档；见 [Chapter 9反向寄存器审计](research_notes/cadence_chapter9_reverse_register_audit.md)。这些寄存器可以帮助判断故障接近哪一层，但无法替代 PHY 眼图或其他模拟链路测量。
 
 ## Interrupt delivery dependency
 

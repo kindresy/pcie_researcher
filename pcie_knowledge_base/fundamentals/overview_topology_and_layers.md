@@ -31,7 +31,7 @@ PCIe 要同时解决另一组更麻烦的问题：
 
 如果把 SPI 看成“两个人拿着对讲机按约定说话”，PCIe 更像“有地址规划、路由、信用额度、可靠传输和事故上报的园区网络”。只是这张网络最终仍要让 CPU 感觉自己在读写寄存器。
 
-## 3. Link 与 Lane：先别把 x4 当成四倍频率
+## 3. Link 与 Lane：x4 表示什么
 
 ### 3.1 直觉
 
@@ -42,7 +42,7 @@ PCIe 要同时解决另一组更麻烦的问题：
 - 一组发送差分对；
 - 一组接收差分对。
 
-多条 Lane 可以聚合成 x2、x4、x8、x16 等 Link。`x4` 的意思是四条 Lane 并行工作，不是把单条 Lane 的时钟硬拧到四倍。
+多条 Lane 可以聚合成 x2、x4、x8、x16 等 Link。`x4` 表示四条 Lane 并行工作，并不表示单条 Lane 的时钟频率提高到四倍。
 
 ### 3.2 规范定义
 
@@ -54,7 +54,7 @@ Base Spec 5.0 §1.2 定义基本 Link 至少有一条 Lane，并列出 x1/x2/x4/
 
 链路上电后，两个端口的硬件通过 Link Training 协商 Lane width 和 signaling rate。Base Spec §1.2 明确说这个初始化过程不需要 firmware 或 OS 参与。负责这一过程的硬件状态机叫 **LTSSM**（Link Training and Status State Machine）。
 
-软件当然可以控制“允许训练”“请求 retrain”“目标速率”等策略，但 TS1/TS2 的逐拍收发不是 Linux 在 while-loop 里手搓出来的。
+软件可以控制“允许训练”“请求 retrain”“目标速率”等策略，但 TS1/TS2 的具体收发由链路硬件完成，不是 Linux 软件逐周期驱动。
 
 ## 4. RC、Root Port、Endpoint 和 Switch
 
@@ -76,7 +76,7 @@ Base Spec 5.0 §1.2 定义基本 Link 至少有一条 Lane，并列出 x1/x2/x4/
 
 Root Port 是 RC 向一个 hierarchy domain 暴露的 PCIe Port。它在配置模型上是桥型 Function，下游可以直连一个 EP，也可以连接 Switch。
 
-常见误区是把 RC 和 RP 当同义词。一个 RC 可以有多个 RP；RP 是“门”，RC 是包含门、地址路由以及 Host 侧连接的“整栋入口建筑”。当然，芯片框图有时会把模块统称为 PCIe RC controller，读寄存器手册时要看它究竟指逻辑角色还是整个 IP block。
+常见误区是把 RC 和 RP 当成同义词。一个 RC 可以包含多个 RP：RP 是 PCIe hierarchy 顶部的一个端口，RC 则还包括 Host 侧连接、地址路由以及相关控制逻辑。芯片框图有时会把整个模块统称为 PCIe RC controller，因此阅读寄存器手册时，需要分清它指的是协议角色还是完整的 IP block。
 
 ### 4.3 Endpoint（EP）
 

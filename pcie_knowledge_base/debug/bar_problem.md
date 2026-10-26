@@ -6,7 +6,7 @@
 2. **资源分配**：枚举器 sizing 后是否找到合适 CPU/PCI window 并写回 BAR。
 3. **地址落地**：Host outbound window 与 EP inbound BAR→AXI translation 是否一致。
 
-前两步都对，第三步错，`lspci` 仍会把 BAR 打印得很漂亮。配置空间会化妆，TLP 不会。
+即使前两步正确而第三步错误，`lspci` 仍可能显示一个看似正常的 BAR resource。配置空间中的地址分配结果不能证明控制器地址窗口和 EP 内部译码已经正确建立。
 
 ## 2. 快速判别表
 
@@ -68,4 +68,3 @@ driver: writel(0x12345678, bar0_va + 0x100)
 - PCIe Base Specification 5.0 r1.0, Configuration header/BAR and bridge window rules in Chapter 7。
 - Cadence PCIe Core User Guide, §§4.5.5–4.5.6.6、§§9.5/9.11/9.17/9.23、§10.3.3。
 - [BAR 与 Cadence 地址翻译](../addressing/bar_and_cadence_address_translation.md)。
-

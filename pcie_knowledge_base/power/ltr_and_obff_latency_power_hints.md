@@ -1,4 +1,4 @@
-# LTR 与 OBFF：设备说“我能等多久”，平台说“现在干活比较划算”
+# LTR 与 OBFF：设备延迟需求与平台活动提示
 
 ## 1. 两种方向相反的功耗提示
 
@@ -102,7 +102,7 @@ RP生成/转发OBFF；EP收到Message时：
 - 收到OBFF窗口时只优化batch，不改变正确性和deadline；
 - DMA completion/interrupt ordering仍按普通PCIe与DMA API规则处理。
 
-当前缺目标kernel/platform source，精确Linux policy owner与call chain保持Unknown。
+X6000 Linux 5.10.4 可用于核对通用 PCI capability 解析与 PM 框架，但外部 Host 的 firmware、平台电源策略和 central resource 实现不在当前源码范围内，因此 LTR/OBFF 的实际 policy owner 与运行期配置仍保持 Unknown。
 
 ## 8. Debug
 

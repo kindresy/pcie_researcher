@@ -1,6 +1,6 @@
 # Research Progress
 
-最后更新：2026-08-27
+最后更新：2026-10-26
 
 状态标记：`[x]` 已有效完成；`[~]` 已扫描/部分深读；`[ ]` 未完成；`[!]` 被当前资料阻塞。
 
@@ -30,6 +30,7 @@
 - [x] `SPEC_DATABOOK_MAPPING.md` 第一版
 - [x] 原始资料逐章 Coverage Matrix：Base Spec、Cadence、MindShare、王齐教材均已建立全章评估表；受保护PPT与缺失Linux/SoC/PHY资料明确标为Blocked
 - [x] 全局写作要求：自然、成熟、严谨的工程交流口吻；修辞克制，解释充分；图示需有教学价值和来源
+- [x] `ARTICLE_INDEX.md`：55 篇正文均有一段用途概述，并按知识依赖分组。
 
 ## Topics
 
@@ -39,8 +40,8 @@
 - [x] BDF / Requester ID / hierarchy routing：已覆盖 RID/Tag、Type0/1、ARI、IOMMU/error identity 与 Linux devfn。
 - [x] Configuration Space / Type 0 / Type 1：已形成配置/ECAM/路由、header与capability正文；字段细节按所属专题解释而非复制整表。
 - [x] Capability / Extended Capability / ECAM：已覆盖两类链、safe walker、path prerequisite、Cadence fixed map 与 Linux API。
-- [x] Enumeration：协议/硬件/Linux 架构链与 Debug 已完成；精确 Linux 扫描实现被 source 缺失阻塞。
-- [x] BAR sizing / resource allocation：BAR sizing、bridge/host window、Cadence两端translation与 Debug 已完成；Linux allocator实现被源码边界阻塞。
+- [x] Enumeration：协议/硬件/Linux 架构链与 Debug 已完成；X6000 5.10.4 已追到 `pci_host_probe()`、目标 `pci_ops` 和通用扫描/资源路径。
+- [x] BAR sizing / resource allocation：BAR sizing、bridge/host window、Cadence两端translation与 Debug 已完成；目标 Linux resource/ROM/BAR helper 已补源码入口。
 - [x] Expansion ROM / Option ROM：已覆盖ROM BAR sizing/enable、Memory Read TLP路径、image与trust policy年代校正；确认当前Cadence PF未实现offset 0x30。
 - [x] CPU / PCI / DMA address domains：已分清CPU virtual/physical、PCI address、DMA address/IOVA与Cadence inbound/outbound translation。
 - [x] Cadence RP/EP address translation：已深读 4.5.5/4.5.6.6、Chapter 9 block 和 Chapter 10 Config/Memory/Message region 实例。
@@ -109,6 +110,7 @@
 - [x] 全库结构/链接/术语审计：77篇Markdown本地链接无断链；MPS、Flow Control、MSI TLP类型、AXI方向与年代边界风险模式复核通过；导航补齐Linux/DMA/IRQ/Link/Error与Chapter 9观测入口。
 - [x] FINAL COVERAGE AUDIT：已完成输入资料、30个目标问题、Databook feature/register、软件→硬件链、结构/图示、链接/术语及24项DONE条件反查；当前证据集无重大遗漏，外部缺失资料保持Blocked。
 - [x] X6000六仓 FINAL COVERAGE AUDIT：21个BootROM分支、Linux/driver/PCS/ATF/tool/HAL、最终产品DTS覆盖、启动交接、MMIO/DMA/MSI/error与源码路线已审计；0断链，外部证据缺口已进入OPEN_QUESTIONS。
+- [x] 2026-10-26 全库正文复审：55 篇正文重新对照 Base Spec 5.0、Cadence Databook、X6000 Linux 5.10.4 和语言规范；修正 MPS“协商”、Memory Read错误 Completion 类型、过时 Linux 证据边界和 CE-001 状态；94 份 Markdown 共 13698 行，0 断链、0 围栏错误、0 内部 IP 命中。
 
 ## 下一步准确起点
 

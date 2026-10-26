@@ -2,7 +2,7 @@
 
 > 研究对象：`source_repos/pcs`，分支 `x6000`，commit `80d6faf2613d1b04e0166c9a258017a0b60588dc`。
 
-## 1. 一句话定位 PCS
+## 1. PCS 阶段的职责
 
 BootROM 把 PCIe EP 拉起来并提供最小下载通道；PCS（平台控制/二级启动固件，运行在 STAR Cortex-M）接过这条仍在线的 Link，重画 BAR0 后面的 APT 地址地图，继续接收 Host 下载的 BL2/ATF 镜像，并负责多 die 分发、低功耗与部分实验性 SR-IOV/FLR 协调。
 

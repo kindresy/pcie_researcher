@@ -1,4 +1,4 @@
-# Cadence 寄存器空间：同一条 APB 总线后面，其实有四栋楼
+# Cadence 寄存器空间：APB 后的四类寄存器区域
 
 ## 1. 为什么先画地图，不能直接抄寄存器表
 
@@ -36,7 +36,7 @@ PF/VF Configuration 选择中，`ADDR[19:12]` 选择 Function：本配置 PF0 �
 
 ## 4. 四类空间分别代表什么
 
-### 4.1 Configuration Register Set：设备对 PCIe 世界的“身份证和控制面板”
+### 4.1 Configuration Register Set：标准配置身份与控制字段
 
 EP 模式下，每个 PF/VF 有自己的 4 KiB Configuration Space，包含：
 
@@ -55,7 +55,7 @@ EP 模式下，每个 PF/VF 有自己的 4 KiB Configuration Space，包含：
 
 RP 模式下使用 Root Port Configuration Register Set。它长得像 Type 1 header，含 Primary/Secondary/Subordinate Bus Number、Memory Base/Limit、Link/Slot/Root/AER 等寄存器，但手册明确说它不能由 Link 上的 Configuration Request 直接访问，只能由本地管理总线操作。
 
-### 4.2 Local Management：控制器自己的驾驶舱
+### 4.2 Local Management：控制器内部管理状态
 
 Local Management 在 EP/RP 两种模式都存在，且不暴露给远端。它控制或记录的是实现状态，例如：
 
@@ -68,7 +68,7 @@ Local Management 在 EP/RP 两种模式都存在，且不暴露给远端。它�
 
 这类 bit 往往不是 PCIe Spec 定义的 wire-visible 字段，而是 Cadence 为实现协议状态机提供的固件旋钮或观察窗。解释它时必须反向连接到协议概念，不能只写“bit 3 enables feature”。
 
-### 4.3 AXI Configuration：地址和 TLP 类型的翻译台
+### 4.3 AXI Configuration：地址与 TLP 类型转换
 
 这个空间配置：
 
@@ -80,11 +80,11 @@ Local Management 在 EP/RP 两种模式都存在，且不暴露给远端。它�
 
 Cadence Chapter 10 给出一个非常重要的事实：同一片 AXI aperture 最终产生什么 TLP，不只由地址决定，还由 region descriptor 决定。访问一个被标成 Config 的 region 会生成 Configuration TLP；标成 Memory 的 region 才生成 Memory Request。
 
-### 4.4 PCIe DMA：内置 uDMA 的命令室
+### 4.4 PCIe DMA：内置 uDMA 的控制和状态
 
 这里是 Cadence integrated uDMA 的 channel control、start pointer、status、interrupt 与能力寄存器。它不等于 Linux 通用 DMA API，也不等于所有 Endpoint 的 DMA engine；只有实际产品选择并驱动这块 Cadence uDMA 时才会使用。
 
-## 5. 一个具体例子：RP 发配置读走哪栋楼
+## 5. 一个具体例子：RP 发起配置读时经过哪些区域
 
 假设本地 CPU 要读取 `01:00.0` 的 Vendor ID：
 
@@ -96,7 +96,7 @@ Cadence Chapter 10 给出一个非常重要的事实：同一片 AXI aperture �
 4. core 的 outbound **AXI Slave** 接收 read，region decode 后生成 Configuration Read Request TLP。
 5. EP 返回 Completion with Data，core 再用 AXI read response 把 Vendor ID 交还本地 CPU。
 
-注意，步骤 1 是 APB 写控制器寄存器；步骤 3 才是触发 PCIe transaction 的 AXI aperture read。两者若混在一张地址表里，debug 时很容易拿 `setpci` 去找 Cadence region descriptor——当然找不到，它根本不在 PCIe 配置空间里。
+注意，步骤 1 是通过 APB 写控制器寄存器；步骤 3 才是触发 PCIe transaction 的 AXI aperture read。两者若混在一张地址表里，debug 时很容易误用 `setpci` 查找 Cadence region descriptor；但该 descriptor 位于控制器私有寄存器空间，并不属于 PCIe Configuration Space。
 
 ## 6. 初始化不应按寄存器地址排序，而应按硬件依赖排序
 
@@ -136,7 +136,7 @@ Cadence Chapter 10 给出一个非常重要的事实：同一片 AXI aperture �
 - 只有需要 Endpoint 主动发请求时才设置 Bus Master Enable；
 - 最后启用 DMA 与 MSI/MSI-X。
 
-把 Bus Master Enable 在 Phase B 就无脑打开并不会让 Link 更积极，只会让尚未准备好的设备更早拥有发包权限。积极有时不是优点。
+在 Phase B 直接打开 Bus Master Enable 不会促进 Link training，只会让尚未准备好的设备提前获得发起事务的权限。BME 应在 DMA 路径、地址映射和错误处理已经就绪后再启用。
 
 ## 7. Reset 与寄存器保存范围
 
@@ -159,7 +159,7 @@ Local Management 是否保留存在手册内部冲突：§4.7.2 说 LM 不清并
 | 本地 APB write | 保留地址 | 不修改寄存器 |
 | core clock 已关闭时 APB access | 取决于 low-power/control 配置 | 可等待 clock 恢复、产生 `PSLVERR`/dummy data 或给出 `reg_access_clk_shutoff` 指示 |
 
-因此“读到 0”不一定是寄存器真的为 0，也可能地址选错或 core clock 已关。驱动最好在读关键 ID/status 前确认 APB error/clock indication，而不是和零值进行哲学讨论。
+因此，读到 0 不一定表示寄存器内容确实为 0，也可能是地址选择错误或 core clock 已关闭。驱动在读取关键 ID/status 前，应先确认 APB error 和 clock indication。
 
 ## 9. 四个 Link register block 的重复关系
 
@@ -189,7 +189,7 @@ PCI core / Function driver
   └─ 不应直接依赖 Cadence 私有 LM 寄存器
 ```
 
-workspace 没有目标 kernel tree、DTS 和 SoC glue driver，所以“哪个 Linux 函数写哪个 Cadence offset”仍是 **Unknown**。当前能确认的是职责边界，不能把另一家 Cadence 平台的 offset 生搬过来。
+X6000 Linux tree 已经补齐目标 kernel、DTS 和 SoC glue。`pcie-edge-plat.c` 负责平台资源、PHY、clock/reset 和 RC/EP 分流；`pcie-edge-host.c` 负责 Root Port、配置访问、地址转换与 IRQ domain；`pcie-edge-ep.c` 负责 EPC 的 BAR/APT、outbound mapping 和中断。具体产品运行期使用哪些 `apt-ranges`，必须继续以最终 DTS/DTB 为准，不能只看公共 DTSI。
 
 ## 11. Source Reference
 
@@ -199,3 +199,4 @@ workspace 没有目标 kernel tree、DTS 和 SoC glue driver，所以“哪个 L
 - Cadence PCIe Core User Guide, §§9.1–9.24, printed pp.324–1268 / PDF pp.413–1357：四 Link register blocks。
 - Cadence PCIe Core User Guide, §§10.1–10.3, printed pp.1269–1277 / PDF pp.1358–1366：equalization 与 outbound programming examples。
 - Cadence PCIe Core User Guide, §11.1.2, reset sequence；§4.7.2, Link Down Reset preservation。
+- X6000 Linux 5.10.4：`drivers/pci/controller/pcie-edge-{plat,host,ep}.c`、`pcie-edge.c` 以及 `arch/arm64/boot/dts/intellif/` 下的产品 DTS。

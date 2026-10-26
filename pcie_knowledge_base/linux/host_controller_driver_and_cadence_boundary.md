@@ -1,6 +1,6 @@
 # Linux PCI Host Controller Driver：把 SoC 窗口包装成通用 PCI 世界
 
-## 1. Function driver 和 Host driver 别认错工种
+## 1. Function driver 与 Host controller driver 的职责边界
 
 | Driver | 管什么 | 典型输入 |
 |---|---|---|
@@ -9,7 +9,7 @@
 | Endpoint controller driver | SoC 在 EP 模式时管理 EPC hardware | EP framework + controller registers |
 | Endpoint function driver | 在 EP SoC 上实现一个可被 Host 枚举的功能 | EPC/EPF APIs + BAR/MSI/DMA |
 
-当前资料只有 Cadence core guide，没有 SoC glue 或 Linux controller source，因此下面给的是应建立的接口映射和待确认点。
+当前工程已经包含 X6000 Linux 5.10.4 的 SoC glue、RC、EPC 和 EPF 源码。下面先解释通用职责，再把它们落到 `pcie-edge-plat.c`、`pcie-edge-host.c`、`pcie-edge-ep.c` 和 Endpoint Framework；更完整的目标代码分析见 [`linux_x6000_pcie_stack.md`](../code_studies/linux_x6000_pcie_stack.md)。
 
 ## 2. Host 初始化主线
 
@@ -30,7 +30,7 @@ platform probe
  → scan/assign/add root bus
 ```
 
-哪些步骤由 bootloader/firmware 预先完成、Linux 是 preserve 还是 reinitialize，必须看目标 platform driver。
+在 X6000 RC 路径中，`edge_plat_pcie_probe()` 完成 PHY、clock、APB reset 和 controller 初始化，然后调用 `edge_pcie_host_setup()`。后者映射配置 aperture、控制 PERST#、启动并等待 Link、初始化地址转换和 INTx/MSI domain，最后设置 `bridge->ops = &edge_pcie_host_ops` 并调用 `pci_host_probe()`。firmware 是否预先留下额外状态仍要结合最终产品 DTB 和实机寄存器 dump 判断。
 
 ## 3. `ranges` 与 `dma-ranges` 方向相反
 
@@ -49,7 +49,7 @@ program target bus/dev/function + Type0/Type1 region
  → restore/reuse region
 ```
 
-那么 `pci_ops.read/write` 必须处理 serialization、absent device/timeout、root bus self config、byte enables 与 region restore。并发扫描或 AER/PM config access 若抢同一个 region，会制造非常难看的幽灵 BDF。
+那么 `pci_ops.read/write` 必须处理 serialization、absent device/timeout、root bus self config、byte enables 与 region restore。若并发的枚举、AER 或 PM 配置访问争用同一个 region，目标 BDF 和返回数据可能不再对应，因此共享窗口必须受到锁和恢复逻辑保护。
 
 ## 5. Cadence EP mode 对应 Linux Endpoint Framework
 
@@ -68,10 +68,12 @@ pci_epf driver
  → 实现业务 register/DMA/test function
 ```
 
-Cadence 当前手册显示 MSI/MSI-X 需要 client logic 构造 AXI MWr，因此 `raise_irq` 的具体 EPC 实现可能要读 capability/table 并编 region，或由 SoC wrapper 提供快捷路径；目标代码缺失，标 **Unknown**。
+X6000 的调用链已经可以确认：EPF 通过 `pci_epc_raise_irq()` 进入 `edge_pcie_ep_raise_irq()`；后者按 `PCI_EPC_IRQ_LEGACY/MSI/MSIX` 分派到 X6000 controller 实现。具体 MSI-X table、远端 relay 和 vector 约定见 `pcie-edge-ep.c` 及多仓库专题。实际产品通过 configfs 广告多少个 vector 仍缺部署脚本，因此数量保留为 `NEED_VERIFY`。
 
 ## 6. Source Reference
 
-- Ubuntu 6.8 `include/linux/pci.h`：`struct pci_host_bridge`/`pci_bus`。
+- X6000 Linux 5.10.4 `include/linux/pci.h`：`struct pci_host_bridge`/`pci_bus`。
+- X6000 RC：`drivers/pci/controller/pcie-edge-plat.c`、`pcie-edge-host.c`、`pcie-edge.c`。
+- X6000 EP：`drivers/pci/controller/pcie-edge-ep.c`、`drivers/pci/endpoint/pci-epc-core.c`、`drivers/pci/endpoint/functions/pci-epf-edge.c`。
 - Cadence Chapters 4、8–11：RP/EP、address translation、reset/link、interrupt。
-- Linux EPC/EPF 精确接口：当前 workspace 未提供 `include/linux/pci-epc.h`、`pci-epf.h` 和实现，待补 kernel tree。
+- 目标源码固定为 `x6000 @ e74fd0e7746a`；外部 Host 服务器所用内核、IOMMU 和 MSI remapper 不在该仓库证据范围内。

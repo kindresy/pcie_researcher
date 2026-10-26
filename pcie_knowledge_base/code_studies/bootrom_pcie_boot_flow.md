@@ -1,4 +1,4 @@
-# BootROM 中的 PCIe：先搭一座独木桥，再让整座城市开机
+# BootROM 中的 PCIe：建立最小下载通道并移交后续启动阶段
 
 > 研究对象：`source_repos/bootrom`。基础流程以 `origin/master`（`9357f731`）为主；X6000 扩展配置以 `origin/pcie-mkfw`（`573da310`）为主。分支之间的差异见 [bootrom_pcie_branch_matrix.md](bootrom_pcie_branch_matrix.md)。
 
@@ -10,7 +10,7 @@ X6000 BootROM 里的 PCIe 代码同时承担三件事：
 2. 把芯片作为 Endpoint（EP）拉到 Link Up，使 Host 能枚举它；
 3. 在完整 Linux 驱动尚未运行时，借 BAR0 和 AP SRAM 实现一个极简下载协议。
 
-所以它不是 Linux PCIe 驱动的缩小版。Linux 驱动要长期管理设备，BootROM 只需要先搭出一座可靠的“独木桥”：Host 能找到设备、能往 SRAM 塞程序、能让 MCU 跳过去执行，任务就完成了一大半。
+所以它不是 Linux PCIe 驱动的缩小版。Linux 驱动需要长期管理设备，BootROM 的目标则很有限：让 Host 能发现设备、通过 BAR0 把程序写入 SRAM，并让 MCU 转入下载得到的入口执行。
 
 ## 2. 它在整机启动链中的位置
 
@@ -38,7 +38,7 @@ sequenceDiagram
     BR->>Next: branch to downloaded image
 ```
 
-直觉上，Link Up 只是“公路修通”；BAR 和 inbound translation 决定“下高速后能到哪栋楼”；ready flag 协议则是双方约定的“门铃”。三者少一个，Host 工具都不能正常下载。
+Link Up 只说明两端已经建立链路；BAR 和 inbound translation 决定 Host 访问最终落到哪段本地地址；ready flag 则定义 Host 与 BootROM 的软件握手。三者缺少任何一项，下载流程都无法正常工作。
 
 ## 3. BootROM 何时初始化 PCIe
 
@@ -299,7 +299,7 @@ X6000/DS 分支还会：
 - 写产品 magic 区分 LM、DS、VS 与普通 X6000；
 - 初始化多 die 的 boot state / IPCM valid 标志。
 
-注意：MPS=1024 只是 EP 能力/控制的一侧设置。链路实际使用的 MPS 还必须服从 RC 枚举后的协商和 Linux 配置，不能看到这个寄存器就宣布所有 TLP payload 都是 1024。
+注意：MPS=1024 只是 EP 侧 Device Control 的设置。MPS 不是链路训练期间自动协商出来的参数；配置软件需要检查通信路径上各个 System Element 的 Max Payload Size Supported，并按层级能力和平台策略设置 Device Control.Max_Payload_Size。因而，不能仅凭 BootROM 写入这个寄存器，就断定后续所有 TLP payload 都会使用 1024 bytes。来源：PCIe Base Spec 5.0 §7.5.3.4 的 *Use of Max_Payload_Size* implementation note。
 
 ### 7.5 2026 分支尾部的 FLR/MSI-X 实验
 

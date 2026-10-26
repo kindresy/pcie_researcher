@@ -1,10 +1,10 @@
-# Capability：别背 offset，让链表告诉你设备会什么
+# Capability：如何发现设备支持的可选能力
 
 ## 1. 为什么不是一个固定大结构体
 
 PM、MSI-X、AER、ATS、SR-IOV 并非每个 Function 都实现。PCIe 用可遍历 capability 结构让硬件按需组合；软件先发现 capability，再按版本/能力位决定能否启用。
 
-## 2. 两条链别混
+## 2. 两类 Capability 链表
 
 | 类型 | 地址范围 | header/next | 常见能力 |
 |---|---|---|---|
@@ -58,7 +58,7 @@ Linux driver 应优先使用 `pci_find_capability()`、`pci_find_next_capability
 - 先按ID找structure，再按version和support bit解释已知字段；
 - 对比自己更新的version保留已知前缀的兼容解析，不要因为“version不等于1”就整块拒绝；
 - 对未知Extended Capability ID，仍用next pointer继续走链；
-- 不把书或某一个build的capability列表当成全PCIe世界的菜单。
+- 不把某本书或某一个 build 的 capability 列表当成所有 PCIe 实现都具备的固定集合。
 
 一个具体年代标记是Tag：旧教材只讲5-bit/8-bit Extended Tag，PCIe 4.0开始又引入10-bit Tag，其Requester/Completer support和enable位在Device Capabilities/Control 2。把旧表拉到Gen4/Gen5硬件上照抄，会直接丢掉新的outstanding request能力。
 
@@ -95,4 +95,4 @@ Linux driver 应优先使用 `pci_find_capability()`、`pci_find_next_capability
 - PCIe Base Specification 5.0 r1.0, §§7.5.3、7.6–7.9。
 - 王齐《PCI Express体系结构导读》，§4.3.3，printed p.133 / PDF p.145（作为年代差异与勘误样本）。
 - Cadence PCIe Core User Guide, Chapter 9 PF/VF/Root Port configuration maps。
-- Ubuntu 6.8 headers, `include/linux/pci.h:1223–1227` public capability APIs。
+- X6000 Linux 5.10.4：`include/linux/pci.h` 与 `drivers/pci/pci.c` 中的 conventional/extended capability walker。

@@ -1,4 +1,4 @@
-# DPC：下游出大错时，先把门关上再收拾
+# DPC：下游错误隔离与恢复
 
 ## 1. DPC 解决什么问题
 
@@ -38,7 +38,7 @@ uncorrectable/fatal or configured trigger
 6. 恢复/重新分配下游 configuration/resource；
 7. driver slot reset/resume 或移除设备。
 
-具体 Linux DPC service 调用链依 kernel 版本；当前没有源码，保持 Unknown。不能只清 DPC status 让中断消失，因为下游 outstanding DMA 和 driver state 仍可能冻结。
+X6000 Linux 5.10.4 的通用 DPC service 位于 `drivers/pci/pcie/dpc.c`，由 Port service 框架分配 IRQ、读取 DPC Status/Source ID，并与 AER recovery 协作。外部 Host 是否启用 DPC native ownership 仍由其 firmware 和内核策略决定。无论由谁处理，都不能只清 DPC status 让中断消失，因为下游 outstanding DMA 和 driver state 仍可能冻结。
 
 ## 5. Cadence 证据边界
 
@@ -62,4 +62,3 @@ uncorrectable/fatal or configured trigger
 
 - PCIe Base Specification 5.0 r1.0, §§2.9.3、6.2.10、DPC Extended Capability in Chapter 7。
 - Cadence PCIe Core User Guide, §§4.7.2–4.7.3，用于区分 Cadence Link Down Reset；当前未发现 DPC implementation evidence。
-

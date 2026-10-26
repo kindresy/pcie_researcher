@@ -21,7 +21,7 @@ PCIe power management 至少有三套状态：
 - **D3hot**：主电仍在、Function 大部分不可操作；Configuration Space 的有限字段仍可访问。
 - **D3cold**：Function 无主电，配置访问不可用；回归需要平台恢复 power，通常相当于更彻底的重新初始化。
 
-每个 Function 的 PM Capability（传统 capability）声明支持状态、PME 能力，并提供 PMCSR：PowerState、PME Enable、PME Status 等。软件在改变 D-state 前必须满足设备/driver quiesce 要求；不能把正在 DMA 的设备直接塞进 D3hot，然后惊讶 descriptor 只搬了一半。
+每个 Function 的 PM Capability（传统 capability）声明支持状态、PME 能力，并提供 PMCSR：PowerState、PME Enable、PME Status 等。软件在改变 D-state 前必须满足设备和 driver 的 quiesce 要求；如果设备仍在 DMA，直接进入 D3hot 可能中断在途传输并留下不完整的 descriptor 状态。
 
 来源：Base Spec 5.0 §§5.1、5.3.1、7.5.2，printed/PDF pp.439、444–449、712–716。
 
@@ -49,7 +49,7 @@ PCIe power management 至少有三套状态：
 
 ### L2/L3 Ready、L2、L3
 
-L2/L3 Ready 是移除 main power/refclock 前的握手 staging point。若保留 Vaux/唤醒逻辑，power off 后抽象为 L2；完全无 power 为 L3。不要把它们简单等同于某个一直运行的 LTSSM 状态——main power 都没了，状态机通常也下班了。
+L2/L3 Ready 是移除 main power/refclock 前的握手阶段。若仍保留 Vaux 或唤醒逻辑，关闭主电源后抽象为 L2；完全无电源则为 L3。它们不等同于一个始终运行的 LTSSM 状态，因为主电源移除后，维持完整状态机运行的条件通常已经不存在。
 
 来源：Base Spec §§5.1–5.2，printed/PDF pp.439–443。
 
@@ -83,7 +83,7 @@ Link idle
  → L0
 ```
 
-进入低功耗前必须处理 ordering、outstanding/receive buffer 和 wake latency。省电不是随手关 clock；协议花了很大篇幅确保两端不会一个睡了、一个还在往门缝塞 Completion。
+进入低功耗前必须处理 ordering、outstanding transaction、receive buffer 和 wake latency。不能简单地直接关闭 clock；协议需要确保两端完成必要的握手，并妥善处理仍在传输或等待返回的事务。
 
 ## 6. PME：唤醒和事件通知是两步
 
@@ -123,7 +123,7 @@ Cadence 特别提醒：`T_POWER_ON` 或 `Common_Mode_Restore_Time` 配得比真�
 
 ### 7.3 Register access 也可能把 Link 叫醒
 
-默认在 L1 substate 访问 controller register 会自动触发退出，回 L0 后完成访问，再可能睡回去。debug bit 可禁止此行为；此时因 CORE_CLK 不可用，APB 对合法地址也会 error。轮询一个调试寄存器因此可能持续阻止深度省电——观测行为改变被观测对象，硬件世界自己的量子笑话。
+默认情况下，在 L1 substate 访问 controller register 会自动触发退出；控制器回到 L0 后完成访问，随后可能再次进入低功耗状态。debug bit 可禁止这一行为；此时 CORE_CLK 不可用，即使 APB 地址合法也可能返回错误。因此，持续轮询调试寄存器本身就可能阻止链路进入深度省电状态。
 
 ### 7.4 L2/L3 entry
 

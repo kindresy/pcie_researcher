@@ -52,7 +52,7 @@ Chapter 6 把同一思路推广到多个 Link：
         └── LINK3 PCIe core ── LINK3_* client/APB/status
 ```
 
-每个 Lane group 可有自己的 `PIPE_PCLK`。client 接口用 `LINK{N}_` 前缀区分。Cadence 还提醒，每增加一个 Link 大致会增加一个对应宽度 core 的门数：分叉不是免费的字符串切片，而是真硬件。
+每个 Lane group 可有自己的 `PIPE_PCLK`，client 接口用 `LINK{N}_` 前缀区分。Cadence 还提醒，每增加一个 Link，大致会增加一个对应宽度 core 的门数；multifurcation 会带来实际的硬件资源开销，而不仅是接口命名上的变化。
 
 ## 4. 它和 PCIe hierarchy 有什么关系
 
@@ -139,4 +139,3 @@ LINK3: inactive
 - Cadence PCIe Core User Guide, `LANE_MAP_MODE` signal description, printed pp.123–124 / PDF pp.212–213。
 - Cadence PCIe Core User Guide, §4.9, Figure 4.24, printed pp.279–280 / PDF pp.368–369。
 - Cadence PCIe Core User Guide, Chapter 6, Figures 6.1–6.4, printed pp.299–301 / PDF pp.388–390。
-

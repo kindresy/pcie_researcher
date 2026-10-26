@@ -118,7 +118,7 @@ Requester 观察往返时间 `t4 - t1`，Responder 提供其内部处理时间 `
 
 软件必须沿 hierarchy 有顺序地 enable：只有相关 Downstream Port 已经 enable，关联 Upstream Port 才能 enable。收到 PTM Message 的 Port 若不支持 PTM，或 Downstream Port 尚未 enable，应按 Unsupported Request 处理。
 
-Linux 6.8 公开 header 能确认 `struct pci_dev` 保存 `ptm_cap`、`ptm_root`、`ptm_enabled` 和 granularity，并公开 `pci_enable_ptm()`、`pci_disable_ptm()`、`pcie_ptm_enabled()`。由于 workspace 没有对应 kernel source，本知识库不伪造其内部调用链。
+X6000 Linux 5.10.4 的 `struct pci_dev` 保存 `ptm_cap`、`ptm_root`、`ptm_enabled` 和 granularity；`drivers/pci/pcie/ptm.c` 实现 `pci_enable_ptm()` 等调用。该源码能说明 Linux 通用 PTM 管理方式，但 X6000 实际硬件 build 是否暴露 PTM Capability，仍要以 capability dump 和 Cadence configuration 为准。
 
 ### 当前 Cadence 实例的结论
 
@@ -185,6 +185,7 @@ Capability walker 的防环、对齐和边界规则见 [Capability discovery 与
   - Appendix H.1 Tables H.1–H.4，当前配置 PF/VF/RP 实际 capability list，printed pp.1370–1372 / PDF pp.1459–1461；
   - Chapter 9 Local Error Status `Unmapped TC`：当前配置未实现 Virtual Channel Capability Registers，代表位置 printed pp.594、1046；
   - 手册 glossary 中 PTM = Precision Time Measurement；error-mask 字段中的 PTM = Poisoned TLP Mask，必须按上下文区分。
-- Local Linux headers, Ubuntu 6.8：
+- X6000 Linux 5.10.4：
   - `include/linux/pci.h`：`struct pci_dev` 的 PTM/ACS 元数据与 `pci_enable_ptm()`、`pci_request_acs()` 等 API declaration；
+  - `drivers/pci/pcie/ptm.c` 与 `drivers/pci/quirks.c`：PTM 管理和 ACS 相关策略/quirk；
   - `include/uapi/linux/pci_regs.h`：VC/MFVC/PTM/ACS Extended Capability IDs 和 PTM/ACS register bit definitions。

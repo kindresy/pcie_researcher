@@ -1,4 +1,4 @@
-# Cadence Completion Buffer：为什么 64 个合法 Read 也可能把内部 FIFO 顶满
+# Cadence Completion Buffer：合法并发读如何造成内部 FIFO 溢出
 
 ## 1. 问题从哪里冒出来
 
@@ -115,7 +115,7 @@ MPS限制带数据 TLP payload，也会影响 Completion payload 大小，但这
 - timeout 后是否继续堆新请求；
 - Link Down/error recovery 是否先 quiesce outstanding。
 
-workspace 缺目标 Linux/firmware code，因此尚不能指出哪个函数写 `Maximum NP Outstanding Request Limit`。这条映射保持 Unknown，不拿别的平台函数名来填空。
+当前已经有 X6000 Linux、BootROM、PCS 和 ATF 源码，但按寄存器名和功能语义检索后，尚未找到运行期写 `Maximum NP Outstanding Request Limit` 的 Linux/firmware 函数。BootROM 专题记录了启动阶段的 non-posted outstanding 设置；是否对应此处同一 Local Management 字段，还需用寄存器 offset 和实机 readback 确认。因此这条映射仍为 Unknown，但原因是缺少字段级闭合证据，而不是缺少源码树。
 
 ## 8. Debug：Completion FIFO overflow 时怎么找真正堵点
 
@@ -148,4 +148,3 @@ application 不 drain inbound Posted write
   - §11.2 Tables 11.3–11.6，四 Link RAM size，printed pp.1292–1293 / PDF pp.1381–1382；
   - §11.4.1–§11.4.4，two-stage Completion buffering、overflow 条件和三类方案，printed pp.1311–1317 / PDF pp.1400–1406；
   - Tables 11.7–11.14，MRRS/alignment 对应的 outstanding limit。
-

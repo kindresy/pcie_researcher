@@ -1,4 +1,4 @@
-# Completion Timeout：请求发出去了，回执却一直没凑齐
+# Completion Timeout：请求发出后没有按时收到完整 Completion
 
 ## 1. 症状的准确含义
 
@@ -46,4 +46,3 @@ Requester request queue/tag
 
 - Base Spec 5.0 §2.8，printed/PDF p.204；§6.2；§7.8.4。
 - Cadence §4.5.6.3.1、Appendix B、Completion Timeout Limit register descriptions。
-

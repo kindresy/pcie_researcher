@@ -1,8 +1,8 @@
-# Memory Access Failure：BAR 映射成功，`readl()` 还是不听话
+# Memory Access Failure：BAR 映射后仍无法正常访问
 
 ## 1. 读失败和写失败不是同一种病
 
-- Memory Read 是 Non-Posted：必须返回 CplD；可见 UR/CA/CTO/Unexpected Completion。
+- Memory Read 是 Non-Posted：成功时通过一个或多个 CplD 返回数据；UR/CA 等失败状态通常通过不带数据的 Completion 返回，完全没有返回则可能触发 CTO。
 - Memory Write 是 Posted：没有普通 Completion；CPU 写完成只代表请求被接收进发送路径，不代表 EP 寄存器已改变。
 
 因此调试 MWr 必须找 EP BAR-hit/local AXI write 或做受控 readback，不能等一个协议上不存在的 Completion。
@@ -65,4 +65,3 @@ CPU VA → page table/device mapping → CPU physical MMIO
 - PCIe Base Specification 5.0 r1.0, §§2.2–2.3、2.8。
 - Cadence PCIe Core User Guide, §§4.5.2、4.5.5–4.5.6。
 - [Memory TLP 与 Completion](../transactions/memory_tlp_and_completion.md)。
-

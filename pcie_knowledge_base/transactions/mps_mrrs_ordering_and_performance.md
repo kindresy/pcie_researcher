@@ -1,4 +1,4 @@
-# MPS、MRRS 与 Ordering：包不是越大越好，乱序也不是越乱越快
+# MPS、MRRS 与 Ordering：TLP 大小、顺序与性能
 
 ## 1. 四个经常被混成一个旋钮的概念
 
@@ -11,7 +11,7 @@
 
 MPS 与 MRRS 的编码范围都是 128、256、512、1024、2048、4096 bytes，但长得像不等于作用相同。
 
-## 2. MPS：限制的是“包里装多少货”
+## 2. MPS：限制单个 TLP 的数据负载
 
 MPS（Max Payload Size）适用于带 data payload 的 TLP，例如 Memory Write 和 Completion with Data。它**不直接限制 Memory Read Request 的 Length**，因为 MRd header 只是描述“请给我多少”，请求本身没有那些读数据。
 
@@ -33,7 +33,7 @@ MPS（Max Payload Size）适用于带 data payload 的 TLP，例如 Memory Write
 
 所以“拉到 4096”不是性能调优，是愿望调优。
 
-## 3. MRRS：限制一次开口要多少读数据
+## 3. MRRS：限制单个 Memory Read Request 请求的数据量
 
 MRRS（Max Read Request Size）只限制 Function 作为 Requester 时生成的 Read Request size。默认编码 `010b` 是 512 B；实现可以只支持 128 B read 并把字段做成只读。
 
@@ -91,7 +91,7 @@ Configuration、I/O、MSI/MSI-X Memory Request 等不允许使用 RO（相关 At
 
 ### ID-Based Ordering
 
-IDO 可按 Requester/Completer ID，某些情况下再结合 PASID，区分互不依赖的 ordering domain。Requester/Completer 只有相应 Device Control 2 enable 后才可设置。它不是“相同 ID 保序、不同 ID 随便跑”这一句话能概括的，具体 passing 仍由 Table 2-40 条目约束。
+IDO 可按 Requester/Completer ID，某些情况下再结合 PASID，区分互不依赖的 ordering domain。Requester/Completer 只有相应 Device Control 2 enable 后才可设置。不能简单地把它概括为“相同 ID 保序、不同 ID 可以任意通过”，具体 passing 仍由 Table 2-40 的条目约束。
 
 ### No Snoop
 
@@ -115,7 +115,7 @@ Cadence region descriptor/sideband 可携带 No Snoop、RO、IDO。能写这些 
 
 ## 9. Linux 驱动能做什么
 
-Ubuntu 6.8 headers 公开：
+X6000 Linux 5.10.4 公开并实现以下 API：
 
 ```c
 int pcie_get_readrq(struct pci_dev *dev);
@@ -138,7 +138,7 @@ int pcie_set_mps(struct pci_dev *dev, int mps);
 6. RO/IDO 是否安全且真正解除了阻塞；
 7. ASPM exit、IOMMU、cache sync 和软件 doorbell batching。
 
-性能计数器若只告诉你“带宽低”，它和报错 `-1` 一样坦率，也一样帮不上忙。最好同时保留 transaction size histogram 和 stall reason。
+只记录“带宽低”不足以定位问题。性能测试应同时保留 transaction size histogram、stall reason、replay/error 和实际 Link speed/width。
 
 ## 11. Source Reference
 
@@ -150,4 +150,4 @@ int pcie_set_mps(struct pci_dev *dev, int mps);
 - PCIe Base Specification 5.0 r1.0, §2.6, pp.193–203：Flow Control。
 - PCIe Base Specification 5.0 r1.0, §7.5.3.4, printed/PDF pp.725–729：Device Control MPS/MRRS/attribute enable。
 - Cadence PCIe Core User Guide, §§4.5.2.7、4.5.4、4.5.6.3.3、4.5.6.4.4、4.5.6.8。
-- Ubuntu 6.8 headers, `include/linux/pci.h:1398–1401`，仅确认公开 API 声明。
+- X6000 Linux 5.10.4 `include/linux/pci.h` 与 `drivers/pci/pci.c`：MPS/MRRS API 及实现。

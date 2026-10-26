@@ -1,4 +1,4 @@
-# Expansion ROM / Option ROM：设备为什么还带着一小块“开机说明书”
+# Expansion ROM / Option ROM：操作系统启动前的设备固件入口
 
 ## 1. 它解决什么问题
 
@@ -6,7 +6,7 @@
 
 它不是BAR0后面“偷藏的一段RAM”，而是一个独立、可选的Memory Space decoder，由Type 0 header offset `0x30`的Expansion ROM Base Address Register描述。Type 1 header中对应位置是`0x38`。
 
-## 2. 直觉：先借个地址，读完就还
+## 2. 直觉：临时分配地址并读取镜像
 
 系统firmware或配置软件的典型动作是：
 
@@ -100,7 +100,7 @@ PCIe 5.0还允许用Enhanced Allocation（EA）Capability中`BEI=8`的entry来�
 
 普通Function driver的`probe()`不应把Option ROM当成常规MMIO BAR来映射和运行。ROM的resource discovery、必要时的临时decode和firmware policy属于PCI core/platform firmware边界；它也不会被`pci_iomap(pdev, 0, ...)`当成BAR0返回。
 
-Linux通常会把ROM作为单独的PCI resource建模，sysfs也可在policy允许时提供ROM访问入口。但当前输入没有Linux source tree，因此这里不伪造某个kernel version的`pci_enable_rom()`内部调用链。未来拿到目标kernel后，应继续追踪：ROM resource如何从config header创建、enable/disable如何保护MSE和共享decoder，以及sysfs read如何与architecture host bridge交互。
+Linux 通常会把 ROM 作为单独的 PCI resource 建模，sysfs 也可在 policy 允许时提供 ROM 访问入口。X6000 Linux 5.10.4 中，`drivers/pci/rom.c` 的 `pci_enable_rom()`、`pci_disable_rom()` 和 `pci_map_rom()` 负责控制 Expansion ROM decode 与映射；`drivers/pci/pci-sysfs.c` 的 ROM 属性通过这些 helper 读取内容。该调用链说明 Linux 如何访问已经发现的 ROM resource，但不能证明当前 Cadence build 实现了 Expansion ROM BAR。
 
 ## 8. Debug清单
 
@@ -124,5 +124,6 @@ Linux通常会把ROM作为单独的PCI resource建模，sysfs也可在policy允�
 
 - PCI Express Base Specification 5.0 r1.0：§7.5.1.2.4，Type 0 Expansion ROM Base Address Register；§7.5.1.3.12，Type 1对应定义；§7.8.5，Enhanced Allocation；§9.3.4.1.15，SR-IOV PF/VF变化。
 - Cadence PCIe Core User Guide：§9.2.1.1.13，p.452；§9.8.1.1.13，p.922，均标记Not Implemented。
+- X6000 Linux 5.10.4：`drivers/pci/rom.c`、`drivers/pci/pci-sysfs.c`。
 - MindShare *PCI Express System Architecture*：Ch.22 printed pp.783–785，ROM BAR和128 KiB sizing例子；Ch.23 printed pp.871–892左右，ROM detection、multiple image、shadowing与旧BIOS/Open Firmware流程。
 - 相关文档：[BAR与Cadence地址转换](../addressing/bar_and_cadence_address_translation.md)、[Configuration Space、ECAM与路由](configuration_space_ecam_and_routing.md)。

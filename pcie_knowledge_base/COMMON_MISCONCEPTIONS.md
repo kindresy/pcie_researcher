@@ -20,7 +20,7 @@ PCIe 有很多“听起来差不多”的东西。下面先把高频坑插上警
 
 ## Memory Write TLP 有 Completion 吗？
 
-正常 Memory Write 是 Posted Request，没有正常 Completion。Data Link ACK 也不是 Completion，它只确认相邻 Link 正确收到包。若要确认写入在协议/设备层生效，驱动常需要设备定义的状态、doorbell/queue 语义或一次有 ordering 意义的 read；具体不能凭空泛化。
+正常 Memory Write 是 Posted Request，没有正常 Completion。Data Link ACK 也不是 Completion，它只确认相邻 Link 正确收到包。若要确认写入在协议或设备层生效，驱动通常需要设备定义的状态、doorbell/queue 语义，或一次具有 ordering 意义的 read；具体方法必须依据设备协议，不能脱离适用条件泛化。
 
 ## Memory Read 为什么需要 Completion？
 

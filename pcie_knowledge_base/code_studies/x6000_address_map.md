@@ -93,7 +93,7 @@ PCS 把 BAR0 inbound base 设为 `0x3f00000000`，再配置九条 APT：
 | 15 | `0xc00000` | `0x1ea0000000` | 2 MiB | group 2控制窗 |
 | 16 | `0xe00000` | `0x22a0000000` | 2 MiB | group 3控制窗 |
 
-Host `edge.ko` 的关键常量因此不是魔法数字：
+Host `edge.ko` 中的这些关键常量可以追溯到明确的地址窗口：
 
 ```text
 BAR0+0x400000 → local 0x58400000 AXI config/ATU

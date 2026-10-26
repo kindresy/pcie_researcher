@@ -31,7 +31,7 @@ lspci -xxxx -s 0000:01:00.0
 | `MSI/MSI-X: Enable+` | Capability control | Host 已配置这种中断机制 |
 | `AER` status/mask/severity | Extended Capability | 错误发生/屏蔽/严重度 |
 
-## 2. `setpci`：Configuration Space 手术刀
+## 2. `setpci`：直接读写 Configuration Space
 
 ```bash
 setpci -s 0000:01:00.0 COMMAND
@@ -41,7 +41,7 @@ setpci -s 0000:01:00.0 ECAP_AER+04.l
 
 它通过 Linux config access 读写配置字段，最终可能产生 Config Read/Write TLP。写操作会真实改变 MSE/BME/ASPM/AER W1C 等硬件状态；先保存旧值和完整拓扑，并确认 field width/语义。
 
-不要用 read-modify-write 想当然处理 RW1C register。也不要在 Linux driver 正管理设备时偷偷改 MSI/BAR/Command，kernel 的软件状态不会自动知道你在背后动过家具。
+不要想当然地用 read-modify-write 处理 RW1C register，也不要在 Linux driver 正管理设备时绕过内核修改 MSI、BAR 或 Command。此类写入会改变硬件状态，却不会同步更新内核已经记录的软件状态，可能造成两边不一致。
 
 ## 3. `dmesg` / kernel log
 
@@ -83,7 +83,7 @@ IOMMU fault log 要看：Requester ID/BDF、IOVA、read/write permission、PASID
 
 `/sys/kernel/debug/pci/` 并非所有 kernel/config 都有固定内容；具体节点由内核版本和 driver 决定。先 `mount -t debugfs none /sys/kernel/debug`（若系统 policy 允许），再只读盘点。
 
-动态调试/tracepoint 可帮助观察 PCI core、PM、AER、IRQ/DMA，但名称随版本变化。目标 kernel source/config 未提供，本知识库不编造固定节点。
+动态调试/tracepoint 可帮助观察 PCI core、PM、AER、IRQ/DMA，但名称随版本变化。X6000 Linux 5.10.4 源码已经提供；实际可用节点仍取决于目标板 kernel config、挂载状态和运行期驱动，因此应先在板上只读盘点。
 
 ## 7. MMIO 访问工具的安全边界
 
@@ -109,5 +109,14 @@ IOMMU fault log 要看：Requester ID/BDF、IOVA、read/write permission、PASID
 
 ## 9. Evidence boundary
 
-这些接口是稳定的 Linux PCI 调试概念；具体文件权限、debugfs 节点、`lspci` 版本输出受目标发行版/kernel/pciutils 影响。当前环境有 kernel headers，但没有目标板 kernel source/runtime hardware，命令执行结果不能替目标系统证据。
+这些接口是稳定的 Linux PCI 调试概念；具体文件权限、debugfs 节点、`lspci` 版本输出受目标发行版、kernel 和 pciutils 影响。当前已有 X6000 Linux 5.10.4 源码，但没有目标板运行期硬件状态，也没有外部 Host 的完整软件环境，因此命令示例不能替代实机证据。
 
+## 10. Source Reference
+
+- Linux `Documentation/PCI/sysfs-pci.rst`：PCI sysfs 目录、`config`、`resource` 与 `resourceN` 的 ABI 和访问方式。
+- Linux `drivers/pci/pci-sysfs.c`：`enable`、配置空间和资源文件等属性的具体实现。
+- Linux `drivers/pci/probe.c`、`include/linux/pci.h`：`pci_dev`、BAR resource 和设备发现后的内核对象。
+- Linux `drivers/pci/msi.c`：`msi_irqs/` 属性组及 MSI/MSI-X IRQ 的分配和释放路径。当前 X6000 内核树使用较旧的 MSI 实现，不能把新内核的内部调用链原样套用到这里。
+- Linux `Documentation/PCI/pcieaer-howto.rst`、`drivers/pci/pcie/aer.c`：AER 服务、日志和恢复路径。
+- PCI Express Base Specification 5.0 §§7.5、7.8：Command/Status、PCI Express Capability 和 AER Extended Capability 等配置字段的硬件语义。
+- `pciutils` 的 `lspci(8)`、`setpci(8)` 手册：命令选项与输出格式；不同发行版所带版本可能存在差异。

@@ -1,10 +1,10 @@
-# Memory TLP 与 Completion：写请求一去不回，读请求要拿 Tag 取餐
+# Memory TLP 与 Completion：写请求、读请求及其返回路径
 
 ## 1. Transaction Layer 在解决什么
 
 PCIe 允许很多请求同时在途，目标响应时间也各不相同。它不采用“发一个请求就霸住总线等结果”的老办法，而使用 pipelined full split-transaction protocol：Request 先走，Completion 之后独立返回。
 
-这带来高并发，也带来一堆必须显式携带的信息：谁发的、要去哪里、请求多长、哪些 byte 有效、返回属于哪个请求、是否成功。
+这带来较高的并发能力，也要求 TLP 显式携带足够的信息：谁发起请求、目标在哪里、请求多长、哪些 byte 有效、返回对应哪个请求，以及事务是否成功。
 
 Base Spec 5.0 §2.1 把 Transaction Layer 的核心职责概括为 TLP 构造/处理、ordering、Traffic Class/VC 与 credit-based flow control。来源：printed/PDF pp.103–104。
 
@@ -242,7 +242,7 @@ Cadence §4.5.6.1–.2 的 outbound requester path 有 64-entry Split Completion
 1. 确认 MSE、BAR/resource 与 host outbound window。
 2. 抓 TLP：地址、Length、First/Last BE、payload 是否正确。
 3. 查 EP BAR/function hit 与 inbound translation。
-4. 查 AXI AW/W/WSTRB/BRESP；别在 Requester 端傻等一条规范不会发的 Completion。
+4. 查 AXI AW/W/WSTRB/BRESP；Requester 不应等待规范并未要求返回的 Completion。
 
 ### Memory Read 超时
 
@@ -263,4 +263,3 @@ Cadence §4.5.6.1–.2 的 outbound requester path 有 64-entry Split Completion
 - PCIe Base Specification 5.0 r1.0, §§2.3.1.1–2.3.2, pp.169–176。
 - Cadence PCIe Core User Guide, §§4.5.1–4.5.2, printed pp.229–236 / PDF pp.318–325。
 - Cadence PCIe Core User Guide, §§4.5.6.1–.2, printed p.248 / PDF p.337。
-

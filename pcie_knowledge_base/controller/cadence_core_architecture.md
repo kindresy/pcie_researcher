@@ -1,4 +1,4 @@
-# Cadence PCIe Core：先看清这颗控制器长什么样
+# Cadence PCIe Core：整体架构与接口边界
 
 ## 1. 资料描述的不是“所有 Cadence PCIe”
 
@@ -24,7 +24,7 @@ Cadence guide 明确说它描述的是一个特定配置：**Gen4 x16 Dual-Mode 
 
 来源：Cadence §2.2，Tables 2.1–2.4，printed pp.6–8 / PDF pp.95–97。
 
-## 3. 内部模块：协议层终于落地了
+## 3. 协议分层对应的内部模块
 
 ![Cadence PCIe Core 高层内部框图](../assets/source_figures/cadence-core-internal-pdf292-crop.png)
 
@@ -58,7 +58,7 @@ Receive path 分出：
 
 TX path 接受 PNP 与 Completion 两类独立接口，经调度后汇聚到 Data Link Layer。Master side 最多维护 64 个 Non-Posted transactions，保存足够状态以匹配 Completion。
 
-这里已经出现后续寄存器研究的关键问题：FIFO 深度/credit 如何配置？64 outstanding 是否按 Link/Function/traffic type 分配？Tag 位宽和超时如何关联？目前先标为 **Open**，不能从框图脑补。
+这里已经出现后续寄存器研究的关键问题：FIFO 深度/credit 如何配置？64 outstanding 是否按 Link/Function/traffic type 分配？Tag 位宽和超时如何关联？这些问题目前标为 **Open**，框图本身不足以支持进一步结论。
 
 ### 3.3 Data Link Layer
 
